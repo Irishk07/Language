@@ -1,0 +1,5 @@
+.vscode
+build/
+dump*
+lang_prog
+*.txt
