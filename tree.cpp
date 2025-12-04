@@ -239,18 +239,18 @@ void PrintNodeToDot(Differentiator* differentiator, FILE *file, Tree_node* tree_
     assert(file);
 
     if (tree_node->type == NUMBER) {
-        fprintf(file, "    node_%p [label=\"{%p | type = Number | value = %lg | left = %p | right = %p}\"];\n", 
+        fprintf(file, "    node_%p [label=\"{%p | type = Number | value = '%lg' | left = %p | right = %p}\"];\n", 
                       (void *)tree_node, tree_node, tree_node->value.number, tree_node->left_node, tree_node->right_node);
     }    
 
     else if (tree_node->type == VARIABLE) {
-        fprintf(file, "    node_%p [label=\"{%p | type = Variable | value = %s (%lg) | left = %p | right = %p}\"];\n", 
+        fprintf(file, "    node_%p [label=\"{%p | type = Variable | value = '%s' (%lg) | left = %p | right = %p}\"];\n", 
                       (void *)tree_node, tree_node, NameOfVariable(differentiator, tree_node), ValueOfVariable(differentiator, tree_node), 
                       tree_node->left_node, tree_node->right_node);
     }
 
     else if (tree_node->type != WRONG_TYPE) {
-        fprintf(file, "    node_%p [label=\"{%p | type = Operator | value = %s | left = %p | right = %p}\"];\n", 
+        fprintf(file, "    node_%p [label=\"{%p | type = Operator | value = '%s' | left = %p | right = %p}\"];\n", 
                       (void *)tree_node, tree_node, IndetifySign(tree_node), tree_node->left_node, tree_node->right_node);
     }  
 

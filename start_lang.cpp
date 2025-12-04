@@ -9,16 +9,27 @@
 #include "start_lang.h"
 #include "tree.h"
 
+// узел список аргументов - он как узел с точкой запятой
+
 // G ::= OP+ '$'
-// OP ::= {A | IF | '{' OP+ '}' } ';'
+// OP ::= {A | IF | '{'OP+'}' } ';'
 // IF ::= "if" '('E')'OP
 // A ::= V'='E
 // E ::= T{[+ -]T}*
-// T ::= P{[* /]P}*
+// T ::= POW{[* /]POW}*
+// POW ::= P{[^]P}*
 // P ::= '('E')' | N | V | F
 // N ::= [0-9]+
 // V ::= [a-z _][a-z 0-9 _]*
 // F ::= [ln, sin, cos, tg, ctg, arcsin, arccos, arctg, arcctg, sh, ch, th, cth]'('E')'
+
+#define DUMP_CURRENT_SITUATION(node)                                                        \
+{                                                                                           \
+        TreeHTMLDump(differentiator, node, DUMP_INFO, NOT_ERROR_DUMP);                      \
+        FILE* html_dump_file = fopen(differentiator->dump_info.html_dump_filename, "a");    \
+        fprintf(html_dump_file, "%s: current situation:'%s'", __func__, *str);              \
+        fclose(html_dump_file);                                                             \
+}
 
 Tree_node* LangGetComandir(Differentiator* differentiator, Tree_status* status, const char* file_name) {
     assert(status);
@@ -35,10 +46,12 @@ Tree_node* LangGetComandir(Differentiator* differentiator, Tree_status* status, 
         if (tree_node_2 == NULL)
             break;
 
-        if (*str == ';') {
-            (str)++;
+        if (tree_node != NULL && tree_node->right_node == NULL)
+            tree_node->right_node = tree_node_2;
+        else
             tree_node = SpuskNodeCtor(OPERATOR, (type_t){.operators = OPERATOR_PC}, tree_node_2, tree_node);
-        }
+
+        TreeHTMLDump(differentiator, tree_node, DUMP_INFO, NOT_ERROR_DUMP);
     }
     while (true);
 
@@ -50,39 +63,6 @@ Tree_node* LangGetComandir(Differentiator* differentiator, Tree_status* status, 
     return tree_node;
 }
 
-// DifNode_t *GetGoal(DifRoot *root, const char **string, VariableArr *arr, size_t *pos) {
-//     assert(root);
-//     assert(string);
-//     assert(arr);
-//     assert(pos);
-    
-//     DifNode_t *first = GetOp(root, string, arr, pos);
-//     if (!first) {
-//         fprintf(stderr, "SYNTAX ERROR: expected statement\n");
-//         return NULL;
-//     }
-
-//     while (**string == ';') {
-//         (*string)++;
-
-//         DifNode_t *next = GetOp(root, string, arr, pos);
-//         if (!next) {
-//             fprintf(stderr, "SYNTAX ERROR: expected statement after ';'\n");
-//             return NULL;
-//         }
-
-//         first = NewNode(root, kOperation, (Value){ .operation = kOperationThen }, first, next, arr);
-//     }
-
-//     if (**string == '$') {
-//         (*string)++;
-//         return first;
-//     }
-
-//     fprintf(stderr, "SYNTAX ERROR: expected ';' or '$', got '%c'\n", **string);
-//     return NULL;
-// }
-
 Tree_node* LangGetOperators(Differentiator* differentiator, char** str, Tree_status* status) {
     assert(differentiator);
     assert(status);
@@ -92,21 +72,38 @@ Tree_node* LangGetOperators(Differentiator* differentiator, char** str, Tree_sta
     if (tree_node != NULL)
         return tree_node;
 
-    TreeHTMLDump(differentiator, tree_node, DUMP_INFO, NOT_ERROR_DUMP);
+    DUMP_CURRENT_SITUATION(tree_node);
 
     tree_node = LangGetAssignment(differentiator, str, status);
     if (tree_node != NULL)
         return tree_node;
 
-    TreeHTMLDump(differentiator, tree_node, DUMP_INFO, NOT_ERROR_DUMP);
+    DUMP_CURRENT_SITUATION(tree_node);
 
-    while (**str == '{') {
+    if (**str == '{') {
         (*str)++;
 
-        Tree_node* tree_node_2 = LangGetOperators(differentiator, str, status);
+        while(**str != '}') {
+            Tree_node* tree_node_2 = LangGetOperators(differentiator, str, status);
 
-        tree_node = SpuskNodeCtor(OPERATOR, (type_t){.operators = OPERATOR_PC}, tree_node_2, tree_node);
+            DUMP_CURRENT_SITUATION(tree_node_2);
+
+            if (tree_node == NULL)
+                tree_node = tree_node_2;
+            else if (tree_node != NULL && tree_node->right_node == NULL)
+                tree_node->right_node = tree_node_2;
+            else
+                tree_node = SpuskNodeCtor(OPERATOR, (type_t){.operators = OPERATOR_PC}, tree_node_2, tree_node);
+
+            // tree_node = SpuskNodeCtor(OPERATOR, (type_t){.operators = OPERATOR_PC}, tree_node_2, tree_node);
+
+            DUMP_CURRENT_SITUATION(tree_node);
+        } 
+        
+        (*str)++;
     }
+
+    DUMP_CURRENT_SITUATION(tree_node);
 
     return tree_node;
 }
@@ -126,14 +123,14 @@ Tree_node* LangGetIf(Differentiator* differentiator, char** str, Tree_status* st
 
         Tree_node* tree_node = LangGetExpression(differentiator, str, status);
 
-        TreeHTMLDump(differentiator, tree_node, DUMP_INFO, NOT_ERROR_DUMP);
+        DUMP_CURRENT_SITUATION(tree_node);
 
         if (**str == ')') {
             (*str)++;
 
             Tree_node* tree_node_2 = LangGetOperators(differentiator, str, status);
 
-            TreeHTMLDump(differentiator, tree_node_2, DUMP_INFO, NOT_ERROR_DUMP);
+            DUMP_CURRENT_SITUATION(tree_node_2);
 
             return SpuskNodeCtor(OPERATOR, (type_t){.operators = OPERATOR_IF}, tree_node, tree_node_2);
         }
@@ -141,31 +138,6 @@ Tree_node* LangGetIf(Differentiator* differentiator, char** str, Tree_status* st
     }
     return NULL;
 }
-
-//     CHECK_NULL_RETURN(cond, GetExpression(root, string, arr, pos));
-
-//     if (**string != ')') {
-//         fprintf(stderr, "SYNTAX_ERROR_IF: expected ')'\n");
-//         return NULL;
-//     }
-//     (*string)++;
-
-//     if (**string == '{') {
-//         (*string)++;
-//         DifNode_t *body = GetOp(root, string, arr, pos);
-//         if (!body) {
-//             fprintf(stderr, "SYNTAX_ERROR_IF: expected statements in body\n");
-//             return NULL;
-//         }
-//         if (**string != '}') {
-//             fprintf(stderr, "SYNTAX_ERROR_IF: expected '}'\n");
-//             return NULL;
-//         }
-//         (*string)++;
-//         return NEWOP(kOperationIf, cond, body);
-//     }
-//     return NULL;
-// }
 
 Tree_node* LangGetAssignment(Differentiator* differentiator, char** str, Tree_status* status) {
     assert(differentiator);
@@ -176,41 +148,31 @@ Tree_node* LangGetAssignment(Differentiator* differentiator, char** str, Tree_st
     if (tree_node == NULL)
         return NULL;
 
+    DUMP_CURRENT_SITUATION(tree_node);
+
     if (**str == '=') {
         (*str)++;
 
         Tree_node* tree_node_2 = LangGetExpression(differentiator, str, status);
 
-        return SpuskNodeCtor(OPERATOR, (type_t){.operators = OPERATOR_EQUAL}, tree_node, tree_node_2);
+        DUMP_CURRENT_SITUATION(tree_node_2);
+
+        fprintf(stderr, "%s: '%s'\n", __func__, *str);
+
+        if (**str != ';')
+            return NULL;
+
+        (*str)++;
+
+        tree_node = SpuskNodeCtor(OPERATOR, (type_t){.operators = OPERATOR_EQUAL}, tree_node, tree_node_2);
+
+        DUMP_CURRENT_SITUATION(tree_node);
+
+        return SpuskNodeCtor(OPERATOR, (type_t){.operators = OPERATOR_PC}, tree_node, NULL);
     }
 
     return NULL;
 }
-
-// static DifNode_t *GetAssignment(DifRoot *root, const char **string, VariableArr *arr, size_t *pos) {
-//     assert(root);
-//     assert(string);
-//     assert(arr);
-//     assert(pos);
-
-//     const char *save = *string;
-//     DifNode_t *maybe_var = GetString(root, string, arr, pos);
-//     if (!maybe_var) {
-//         *string = save;
-//         return NULL;
-//     }
-
-//     if (**string != '=') {
-//         *string = save;
-//         return NULL;
-//     }
-
-//     (*string)++;
-
-//     CHECK_NULL_RETURN(value, GetExpression(root, string, arr, pos)); // присваивание значения ноде
-//     printf("op done\n");
-//     return NEWOP(kOperationIs, maybe_var, value);
-// }
 
 Tree_node* LangGetExpression(Differentiator* differentiator, char** str, Tree_status* status) {
     assert(str);
@@ -219,17 +181,23 @@ Tree_node* LangGetExpression(Differentiator* differentiator, char** str, Tree_st
 
     Tree_node* new_node = LangGetTerm(differentiator, str, status);
 
+    DUMP_CURRENT_SITUATION(new_node);
+
     while (**str == '+' || **str == '-') {
         int cur_operator = (**str);
         (*str)++;
 
         Tree_node* new_node_2 = LangGetTerm(differentiator, str, status);
 
+        DUMP_CURRENT_SITUATION(new_node_2);
+
         if (cur_operator == '+')
             new_node = SpuskNodeCtor(OPERATOR, (type_t){.operators = OPERATOR_ADD}, new_node, new_node_2);
         else 
             new_node = SpuskNodeCtor(OPERATOR, (type_t){.operators = OPERATOR_SUB}, new_node, new_node_2);
     }
+
+    DUMP_CURRENT_SITUATION(new_node);
 
     return new_node;
 }
@@ -238,18 +206,49 @@ Tree_node* LangGetTerm(Differentiator* differentiator, char** str, Tree_status* 
     assert(str);
     assert(*str);
 
-    Tree_node* new_node = LangGetPrimaryExpression(differentiator, str, status);
+    Tree_node* new_node = LangGetPow(differentiator, str, status);
+
+    DUMP_CURRENT_SITUATION(new_node);
 
     while (**str == '*' || **str == '/') {
         int cur_operator = (**str);
         (*str)++;
 
-        Tree_node* new_node_2 = LangGetPrimaryExpression(differentiator, str, status);
+        Tree_node* new_node_2 = LangGetPow(differentiator, str, status);
+        DUMP_CURRENT_SITUATION(new_node_2);
+
         if (cur_operator == '*')
             new_node = SpuskNodeCtor(OPERATOR, (type_t){.operators = OPERATOR_MUL}, new_node, new_node_2);
         else 
             new_node = SpuskNodeCtor(OPERATOR, (type_t){.operators = OPERATOR_DIV}, new_node, new_node_2);
     }
+
+    DUMP_CURRENT_SITUATION(new_node);
+
+    return new_node;
+}
+
+Tree_node* LangGetPow(Differentiator* differentiator, char** str, Tree_status* status) {
+    assert(differentiator);
+    assert(status);
+    assert(str);
+
+    Tree_node* new_node = LangGetPrimaryExpression(differentiator, str, status);
+
+    DUMP_CURRENT_SITUATION(new_node);
+
+    SkipSpaces(str);
+    while (**str == '^') {
+        (*str)++;
+
+        Tree_node* new_node_2 = LangGetPrimaryExpression(differentiator, str, status);
+        DUMP_CURRENT_SITUATION(new_node_2);
+        new_node = SpuskNodeCtor(OPERATOR, (type_t){.operators = OPERATOR_POW}, new_node, new_node_2);
+        
+        SkipSpaces(str);
+    }
+
+    DUMP_CURRENT_SITUATION(new_node);
 
     return new_node;
 }
@@ -263,6 +262,8 @@ Tree_node* LangGetPrimaryExpression(Differentiator* differentiator, char** str, 
     if (**str == '(') {
         (*str)++;
         tree_node = LangGetExpression(differentiator, str, status);
+
+        DUMP_CURRENT_SITUATION(tree_node);
 
         if (**str != ')')
             *status = NOT_END_SKOBKA;
@@ -284,10 +285,12 @@ Tree_node* LangGetPrimaryExpression(Differentiator* differentiator, char** str, 
             return tree_node;
     }
 
+    DUMP_CURRENT_SITUATION(tree_node);
+
     return tree_node;
 }
 
-Tree_node* LangGetNumber(Differentiator*, char** str, Tree_status* status) {
+Tree_node* LangGetNumber(Differentiator* differentiator, char** str, Tree_status* status) {
     assert(str);
     assert(*str);
 
@@ -306,6 +309,8 @@ Tree_node* LangGetNumber(Differentiator*, char** str, Tree_status* status) {
 
     else 
         tree_node = SpuskNodeCtor(NUMBER, (type_t){.number = val}, NULL, NULL);
+
+    DUMP_CURRENT_SITUATION(tree_node);
 
     return tree_node;
 }

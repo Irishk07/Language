@@ -16,6 +16,8 @@ Tree_node* LangGetExpression(Differentiator* differentiator, char** str, Tree_st
 
 Tree_node* LangGetTerm(Differentiator* differentiator, char** str, Tree_status* status);
 
+Tree_node* LangGetPow(Differentiator* differentiator, char** str, Tree_status* status);
+
 Tree_node* LangGetPrimaryExpression(Differentiator* differentiator, char** str, Tree_status* status);
 
 Tree_node* LangGetNumber(Differentiator*, char** str, Tree_status* status);
