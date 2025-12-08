@@ -31,32 +31,36 @@ enum Type_dump {
 
 Tree_status TreeCtor(Tree* tree, const char* html_dump_filename, const char* directory);
 
-Tree_node* NodeCtor(Tree* tree, Type_node type, type_t value,
+Tree_node* NodeCtor(Type_node type, type_t value,
                     Tree_node* left_node, Tree_node* right_node);
-
-Tree_status TreeVerify(Differentiator* differentiator);
-
-Tree_status AllNodesVerify(Tree* tree, Tree_node* tree_node);
 
 size_t TreeSize(Tree_node* tree_node);
 
 char* ReadAnswer();
 
-double ValueOfVariable(Differentiator* differentiator, Tree_node* tree_node);
-
-char* NameOfVariable(Differentiator* differentiator, Tree_node* tree_node);
-
 size_t IndexOfVariable(Tree_node* tree_node);
+
+double ValueOfVariable(Language* language, Tree_node* tree_node);
+
+double ValueOfVariableFromIndex(Language* language, size_t index);
+
+char* NameOfVariable(Language* language, Tree_node* tree_node);
+
+char* NameOfVariableFromIndex(Language* language, size_t index);
 
 const char* IndetifySign(Tree_node* tree_node);
 
 void SkipSpaces(char** buffer);
 
-Tree_status TreeHTMLDump(Differentiator* differentiator, Tree_node* tree_node, int line, const char* file, Type_dump type_dump, Tree_status tree_status);
+void SkipComments(char** buffer);
 
-Tree_status GenerateGraph(Differentiator* differentiator, Tree_node* tree_node);
+Tree_status TreeHTMLDump(Language* language, Tree_node* tree_node, int line, const char* file, Type_dump type_dump, Tree_status tree_status);
 
-void PrintNodeToDot(Differentiator* differentiator, FILE *file, Tree_node* tree_node);
+Tree_status TreeHTMLDumpArrayTokens(Language* language, size_t number_token, int line, const char* file);
+
+Tree_status GenerateGraph(Language* language, Tree_node* tree_node);
+
+void PrintNodeToDot(Language* language, FILE *file, Tree_node* tree_node);
 
 void PrintErrors(int error, FILE* stream);
 

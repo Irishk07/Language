@@ -13,6 +13,12 @@
             }                                                             \
         }
 
+#define DUMP_CURRENT_SITUATION(node)                                                        \
+{                                                                                           \
+        TreeHTMLDump(language, node, DUMP_INFO, NOT_ERROR_DUMP);                            \
+        TreeHTMLDumpArrayTokens(language, *number_token, DUMP_INFO);                        \
+}
+
 
 const int CNT_ATTEMPTS  = 5;
 const int DEFAULT_VALUE = 666;
@@ -46,35 +52,59 @@ enum Type_operators {
     OPERATOR_TH     = 17,  
     OPERATOR_CTH    = 18, 
     OPERATOR_EQUAL  = 19,
-    OPERATOR_PC     = 20,
+    OPERATOR_COMMON = 20,
     OPERATOR_IF     = 21,
+    OPERATOR_WHILE  = 22,
+    OPERATOR_OPEN_BRACKET  = 23,
+    OPERATOR_CLOSE_BRACKET = 24,
+    OPERATOR_OPEN_FIGURE   = 25,
+    OPERATOR_CLOSE_FIGURE  = 26,
+    OPERATOR_FINISH_SYMBOL = 27,
     WRONG_OPERATOR
 };
 
 struct About_function {
     const char* name;
     Type_operators type;
+    unsigned long hash;
 };
 
-About_function const about_functions[] = {{.name = "ln", .type = OPERATOR_LN}, 
-                                          {.name = "log", .type = OPERATOR_LOG},
-                                          {.name = "sin", .type = OPERATOR_SIN},
-                                          {.name = "cos", .type = OPERATOR_COS},
-                                          {.name = "tg", .type = OPERATOR_TG},
-                                          {.name = "ctg", .type = OPERATOR_CTG},
-                                          {.name = "arcsin", .type = OPERATOR_ARCSIN},
-                                          {.name = "arccos", .type = OPERATOR_ARCCOS},
-                                          {.name = "arctg", .type = OPERATOR_ARCTG},
-                                          {.name = "arcctg", .type = OPERATOR_ARCCTG},
-                                          {.name = "sh", .type = OPERATOR_SH},
-                                          {.name = "ch", .type = OPERATOR_CH},
-                                          {.name = "th", .type = OPERATOR_TH},
-                                          {.name = "cth", .type = OPERATOR_CTH}};
+unsigned long hash_djb2(const char *str);
+
+About_function const key_words[] = {{.name = "ln",     .type = OPERATOR_LN,     .hash = hash_djb2("ln")}, 
+                                    {.name = "log",    .type = OPERATOR_LOG,    .hash = hash_djb2("log")},
+                                    {.name = "sin",    .type = OPERATOR_SIN,    .hash = hash_djb2("sin")},
+                                    {.name = "cos",    .type = OPERATOR_COS,    .hash = hash_djb2("cos")},
+                                    {.name = "tg",     .type = OPERATOR_TG,     .hash = hash_djb2("tg")},
+                                    {.name = "ctg",    .type = OPERATOR_CTG,    .hash = hash_djb2("ctg")},
+                                    {.name = "arcsin", .type = OPERATOR_ARCSIN, .hash = hash_djb2("arcsin")},
+                                    {.name = "arccos", .type = OPERATOR_ARCCOS, .hash = hash_djb2("arccos")},
+                                    {.name = "arctg",  .type = OPERATOR_ARCTG,  .hash = hash_djb2("arctg")},
+                                    {.name = "arcctg", .type = OPERATOR_ARCCTG, .hash = hash_djb2("arcctg")},
+                                    {.name = "sh",     .type = OPERATOR_SH,     .hash = hash_djb2("sh")},
+                                    {.name = "ch",     .type = OPERATOR_CH,     .hash = hash_djb2("ch")},
+                                    {.name = "th",     .type = OPERATOR_TH,     .hash = hash_djb2("th")},
+                                    {.name = "cth",    .type = OPERATOR_CTH,    .hash = hash_djb2("cth")},
+                                    {.name = "if",     .type = OPERATOR_IF,     .hash = hash_djb2("if")},
+                                    {.name = "while",  .type = OPERATOR_WHILE,  .hash = hash_djb2("while")}};
+
+About_function const signs[] = {{.name = "+", .type = OPERATOR_ADD,           .hash = hash_djb2("+")},
+                                {.name = "-", .type = OPERATOR_SUB,           .hash = hash_djb2("-")}, 
+                                {.name = "/", .type = OPERATOR_DIV,           .hash = hash_djb2("/")},
+                                {.name = "*", .type = OPERATOR_MUL,           .hash = hash_djb2("*")},
+                                {.name = "^", .type = OPERATOR_POW,           .hash = hash_djb2("^")},
+                                {.name = ";", .type = OPERATOR_COMMON,        .hash = hash_djb2(";")},
+                                {.name = "(", .type = OPERATOR_OPEN_BRACKET,  .hash = hash_djb2("(")},
+                                {.name = ")", .type = OPERATOR_CLOSE_BRACKET, .hash = hash_djb2(")")},
+                                {.name = "{", .type = OPERATOR_OPEN_FIGURE,   .hash = hash_djb2("{")},
+                                {.name = "}", .type = OPERATOR_CLOSE_FIGURE,  .hash = hash_djb2("}")},
+                                {.name = "=", .type = OPERATOR_EQUAL,         .hash = hash_djb2("=")},
+                                {.name = "$", .type = OPERATOR_FINISH_SYMBOL, .hash = hash_djb2("$")}};
 
 
 union type_t {
-    double number;
-    int    index_variable;
+    int number;
+    int index_variable;
     Type_operators operators;
 };
 
@@ -86,20 +116,14 @@ enum Tree_status {
     CLOSE_ERROR              = 4,
     WRONG_SITUATION          = 5,
     READ_ERROR               = 6,
-    NULL_POINTER_ON_TREE     = 7,
-    WRONG_SIZE               = 8,
-    NULL_POINTER_ON_NODE     = 9,
-    PARENT_AND_CHILD_UNEQUAL = 10,
-    WRONG_ROOT               = 11,
-    WRONG_NODE               = 12,
-    NULL_POINTER_ON_LEAF     = 13,
-    SYNTAX_ERROR             = 14,
-    BUFFER_OVERFLOW          = 15,
-    STAT_ERROR               = 16,
-    INPUT_ERROR              = 17,
-    NOT_END_SYMBOL           = 18,
-    NOT_END_SKOBKA           = 19,
-    NOT_NUMBER               = 20
+    SYNTAX_ERROR             = 7,
+    BUFFER_OVERFLOW          = 8,
+    STAT_ERROR               = 9,
+    INPUT_ERROR              = 10,
+    NOT_END_SYMBOL           = 11,
+    NOT_END_SKOBKA           = 12,
+    NOT_NUMBER               = 13,
+    UNKNOWN_OPERATOR         = 14
 };
 
 
@@ -126,35 +150,26 @@ struct About_tree {
     Tree* tree;
     double value;
 };
-
-typedef About_tree* trees_type_t;
-
+ 
 struct About_variable {
     char* name;
     double value;
 };
 
-typedef About_variable* variables_type_t;
-
-struct Array_with_variables {
-    variables_type_t* data = NULL;
+struct Array_with_data {
+    void* data = NULL;
     size_t size = 0;
     size_t capacity = 0;
+    size_t elem_size;
 };
 
-struct Array_with_trees {
-    trees_type_t* data = NULL;
-    size_t size = 0;
-    size_t capacity = 0;
-};
-
-struct Differentiator {
+struct Language {
     Tree tree;
-    Array_with_variables array_with_variables;
-    char* begin_buffer;
+    Array_with_data array_with_variables;
+    Array_with_data array_with_tokens;
     char* end_buffer;
     size_t size_buffer;
-    char* buffer_with_tree = NULL;
+    char* begin_buffer;
     Dump_information dump_info;
 };
 

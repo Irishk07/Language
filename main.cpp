@@ -2,9 +2,10 @@
 
 #include "array.h"
 #include "common.h"
-#include "differentiator.h"
+#include "language.h"
+#include "tokenizator.h"
 #include "tree.h"
-#include "start_lang.h"
+#include "syntax_analize.h"
 
 int main(int, char** argv) {
     Tree_status status = SUCCESS;
@@ -13,15 +14,17 @@ int main(int, char** argv) {
     const char* directory          = argv[2];
     const char* file               = argv[3];
 
-    Differentiator differentiator = {};
+    Language language = {};
 
-    DifferentiatorCtor(&differentiator, html_dump_filename, directory);
+    LanguageCtor(&language, html_dump_filename, directory);
 
-    differentiator.tree.root = LangGetComandir(&differentiator, &status, file);
+    Tokenizator(&language, file);
 
-    TreeHTMLDump(&differentiator, differentiator.tree.root, DUMP_INFO, NOT_ERROR_DUMP);
+    language.tree.root = LangGetComandir(&language, &status);
 
-    DifferentiatorDtor(&differentiator);
+    TreeHTMLDump(&language, language.tree.root, DUMP_INFO, NOT_ERROR_DUMP);
+
+    LanguageDtor(&language);
 
     return 0;
 }

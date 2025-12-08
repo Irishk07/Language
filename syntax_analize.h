@@ -1,0 +1,29 @@
+#ifndef SYNTAX_ANALIZE_H_
+#define SYNTAX_ANALIZE_H_
+
+#include "common.h"
+
+
+Tree_node* LangGetComandir(Language* language, Tree_status* status);
+
+Tree_node* LangGetOperators(Language* language, size_t* number_token, Tree_status* status);
+
+Tree_node* LangGetIf(Language* language, size_t* number_token, Tree_status* status);
+
+Tree_node* LangGetAssignment(Language* language, size_t* number_token, Tree_status* status);
+
+Tree_node* LangGetExpression(Language* language, size_t* number_token, Tree_status* status);
+
+Tree_node* LangGetTerm(Language* language, size_t* number_token, Tree_status* status);
+
+Tree_node* LangGetPow(Language* language, size_t* number_token, Tree_status* status);
+
+Tree_node* LangGetPrimaryExpression(Language* language, size_t* number_token, Tree_status* status);
+
+Tree_node* LangGetNumber(Language* language, size_t* number_token, Tree_status* status);
+
+Tree_node* LangGetVariable(Language* language, size_t* number_token, Tree_status*);
+
+Tree_node* LangGetFunction(Language* language, size_t* number_token, Tree_status* status);
+
+#endif // SYNTAX_ANALIZE_H_

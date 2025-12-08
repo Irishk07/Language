@@ -5,6 +5,7 @@
 
 #include "tree.h"
 
+#include "array.h"
 #include "common.h"
 
 
@@ -18,9 +19,8 @@ Tree_status TreeCtor(Tree* tree, const char* html_dump_filename, const char* dir
     return SUCCESS;
 }
 
-Tree_node* NodeCtor(Tree* tree, Type_node type, type_t value,
+Tree_node* NodeCtor(Type_node type, type_t value,
                     Tree_node* left_node, Tree_node* right_node) {
-    assert(tree);
 
     Tree_node* new_node = (Tree_node*)calloc(1, sizeof(Tree_node));
     if (new_node == NULL)
@@ -30,36 +30,9 @@ Tree_node* NodeCtor(Tree* tree, Type_node type, type_t value,
     new_node->right_node = right_node;
     new_node->type       = type;
     new_node->value      = value;
-    tree->size++;
 
     return new_node;
 }
-
-
-// Tree_status TreeVerify(Differentiator* differentiator) {
-//     if (differentiator.tree == NULL)
-//         TREE_DUMP_AND_RETURN_ERRORS(NULL_POINTER_ON_TREE);
-
-//     if (differentiator.tree.size != TreeSize(differentiator->tree->root))
-//         TREE_DUMP_AND_RETURN_ERRORS(WRONG_SIZE);
-
-//     TREE_DUMP_AND_RETURN_ERRORS(AllNodesVerify(differentiator->tree, differentiator->tree->root));
-
-//     return SUCCESS;
-// }
-
-// Tree_status AllNodesVerify(Tree* tree, Tree_node* tree_node) {
-//     if (tree_node == NULL)
-//         return SUCCESS;
-
-//     if (tree_node == NULL) TREE_CHECK_AND_RETURN_ERRORS(NULL_POINTER_ON_NODE);
-
-//     TREE_CHECK_AND_RETURN_ERRORS(AllNodesVerify(tree, tree_node->left_node));
-
-//     TREE_CHECK_AND_RETURN_ERRORS(AllNodesVerify(tree, tree_node->right_node));
-
-//     return SUCCESS;
-// }
 
 size_t TreeSize(Tree_node* tree_node) {
     if (tree_node == NULL) {
@@ -87,18 +60,36 @@ size_t IndexOfVariable(Tree_node* tree_node) {
     return (size_t)tree_node->value.index_variable;
 }
 
-double ValueOfVariable(Differentiator* differentiator, Tree_node* tree_node) {
-    assert(differentiator);
+double ValueOfVariable(Language* language, Tree_node* tree_node) {
+    assert(language);
     assert(tree_node);
 
-    return (differentiator->array_with_variables.data)[IndexOfVariable(tree_node)]->value;
+    return ValueOfVariableFromIndex(language, IndexOfVariable(tree_node));
 }
 
-char* NameOfVariable(Differentiator* differentiator, Tree_node* tree_node) {
-    assert(differentiator);
+double ValueOfVariableFromIndex(Language* language, size_t index) {
+    assert(language);
+
+    About_variable about_variable = {};
+    ArrayGetElement(&(language->array_with_variables), &about_variable, index);
+
+    return about_variable.value;
+}
+
+char* NameOfVariable(Language* language, Tree_node* tree_node) {
+    assert(language);
     assert(tree_node);
 
-    return (differentiator->array_with_variables.data)[IndexOfVariable(tree_node)]->name;
+    return NameOfVariableFromIndex(language, IndexOfVariable(tree_node));
+}
+
+char* NameOfVariableFromIndex(Language* language, size_t index) {
+    assert(language);
+
+    About_variable about_variable = {};
+    ArrayGetElement(&(language->array_with_variables), &about_variable, index);
+
+    return about_variable.name;
 }
 
 const char* IndetifySign(Tree_node* tree_node) {
@@ -127,8 +118,14 @@ const char* IndetifySign(Tree_node* tree_node) {
                 case OPERATOR_TH:     return "th";
                 case OPERATOR_CTH:    return "cth";
                 case OPERATOR_EQUAL:  return "=";
-                case OPERATOR_PC:     return ";";
+                case OPERATOR_COMMON: return ";";
                 case OPERATOR_IF:     return "if";
+                case OPERATOR_WHILE:  return "while";
+                case OPERATOR_OPEN_BRACKET:  return "(";
+                case OPERATOR_CLOSE_BRACKET: return ")";
+                case OPERATOR_OPEN_FIGURE:   return "{";
+                case OPERATOR_CLOSE_FIGURE:  return "}";
+                case OPERATOR_FINISH_SYMBOL: return "$";
                 case WRONG_OPERATOR:
                 default: break;
             }
@@ -149,16 +146,44 @@ void SkipSpaces(char** buffer) {
         (*buffer)++;
 }
 
+void SkipComments(char** buffer) {
+    assert(buffer);
+    assert(*buffer);
 
-Tree_status TreeHTMLDump(Differentiator* differentiator, Tree_node* tree_node, int line, const char* file, Type_dump type_dump, Tree_status tree_status) {
-    assert(differentiator);
+    if (**buffer != '#')
+        return;
+    
+    (*buffer)++;
+
+    while (**buffer != '\n' && (**buffer) != '\0')
+        (*buffer)++;
+
+    (*buffer)++;
+}
+
+unsigned long hash_djb2(const char *str) {
+    assert(str);
+
+    unsigned long hash = 5381;
+    int c = 0;
+
+    while ((c = *(str++)) != '\0') {
+        hash = ((hash << 5) + hash) + (unsigned long)c; /* hash * 33 + c */
+    }
+
+    return hash;
+}
+
+
+Tree_status TreeHTMLDump(Language* language, Tree_node* tree_node, int line, const char* file, Type_dump type_dump, Tree_status tree_status) {
+    assert(language);
     assert(file);
 
     FILE* html_dump_file = NULL;
-    if (differentiator->dump_info.num_html_dump == 0)
-        html_dump_file = fopen(differentiator->dump_info.html_dump_filename, "w");
+    if (language->dump_info.num_html_dump == 0)
+        html_dump_file = fopen(language->dump_info.html_dump_filename, "w");
     else
-        html_dump_file = fopen(differentiator->dump_info.html_dump_filename, "a");
+        html_dump_file = fopen(language->dump_info.html_dump_filename, "a");
     if (html_dump_file == NULL)
         TREE_CHECK_AND_RETURN_ERRORS(OPEN_ERROR);
 
@@ -171,34 +196,28 @@ Tree_status TreeHTMLDump(Differentiator* differentiator, Tree_node* tree_node, i
         fprintf(html_dump_file, "<h3> ERROR_ANSWER DUMP <font color = red> Tree </font> </h3>\n");
 
         PrintErrors(tree_status, html_dump_file);
-
-        if (tree_status == NULL_POINTER_ON_TREE ||
-            tree_status == NULL_POINTER_ON_NODE)
-            return tree_status;
     }
 
     fprintf(html_dump_file, "Tree {%s: %d}\n", file, line);
 
-    fprintf(html_dump_file, "Size: %zu\n", differentiator->tree.size);
+    fprintf(html_dump_file, "Root: %p\n", language->tree.root);
 
-    fprintf(html_dump_file, "Root: %p\n", differentiator->tree.root);
-
-    TREE_CHECK_AND_RETURN_ERRORS(GenerateGraph(differentiator, tree_node));
+    TREE_CHECK_AND_RETURN_ERRORS(GenerateGraph(language, tree_node));
 
     char command[MAX_LEN_NAME] = {};
     snprintf(command, MAX_LEN_NAME, "dot %s/graphes/graph%d.txt -T png -o %s/images/image%d.png", 
-                                     differentiator->dump_info.directory, differentiator->dump_info.num_html_dump, 
-                                     differentiator->dump_info.directory, differentiator->dump_info.num_html_dump);
+                                     language->dump_info.directory, language->dump_info.num_html_dump, 
+                                     language->dump_info.directory, language->dump_info.num_html_dump);
     
     if (system((const char*)command) != 0)
         TREE_CHECK_AND_RETURN_ERRORS(EXECUTION_FAILED,      fprintf(html_dump_file, "Error with create image:(\n"));
 
     fprintf(html_dump_file, "\n");
-    fprintf(html_dump_file, "<img src = %s/images/image%d.png width = 1000px>", differentiator->dump_info.directory, differentiator->dump_info.num_html_dump);
+    fprintf(html_dump_file, "<img src = %s/images/image%d.png width = 1000px>", language->dump_info.directory, language->dump_info.num_html_dump);
 
     fprintf(html_dump_file, "\n\n");
 
-    differentiator->dump_info.num_html_dump++;
+    language->dump_info.num_html_dump++;
 
     if (fclose(html_dump_file) == EOF)
         TREE_CHECK_AND_RETURN_ERRORS(CLOSE_ERROR,      perror("Error is: "));
@@ -206,11 +225,46 @@ Tree_status TreeHTMLDump(Differentiator* differentiator, Tree_node* tree_node, i
     return SUCCESS;
 }
 
-Tree_status GenerateGraph(Differentiator* differentiator, Tree_node* tree_node) {
-    assert(differentiator);
+Tree_status TreeHTMLDumpArrayTokens(Language* language, size_t number_token, int line, const char* file) {
+    assert(language);
+    assert(file);
+
+    FILE* html_dump_file = NULL;
+    if (language->dump_info.num_html_dump == 0)
+        html_dump_file = fopen(language->dump_info.html_dump_filename, "w");
+    else
+        html_dump_file = fopen(language->dump_info.html_dump_filename, "a");
+
+    for (size_t i = number_token; i < language->array_with_tokens.size; ++i) {
+        Tree_node* tree_node = NULL;
+        ArrayGetElement(&(language->array_with_tokens), &tree_node, i);
+        TREE_CHECK_AND_RETURN_ERRORS(GenerateGraph(language, tree_node));
+
+        char command[MAX_LEN_NAME] = {};
+        snprintf(command, MAX_LEN_NAME, "dot %s/graphes/graph%d.txt -T png -o %s/images/image%d.png", 
+                                        language->dump_info.directory, language->dump_info.num_html_dump, 
+                                        language->dump_info.directory, language->dump_info.num_html_dump);
+
+        if (system((const char*)command) != 0)
+            TREE_CHECK_AND_RETURN_ERRORS(EXECUTION_FAILED,      fprintf(html_dump_file, "Error with create image:(\n"));
+
+        fprintf(html_dump_file, "\n");
+        fprintf(html_dump_file, "<img src = %s/images/image%d.png width = 1000px>", language->dump_info.directory, language->dump_info.num_html_dump);
+
+        fprintf(html_dump_file, "\n\n");
+
+    }
+
+    language->dump_info.num_html_dump++;
+
+    return SUCCESS;
+}
+
+Tree_status GenerateGraph(Language* language, Tree_node* tree_node) {
+    assert(language);
 
     char filename_graph[MAX_LEN_NAME] = {};
-    snprintf(filename_graph, MAX_LEN_NAME, "%s/graphes/graph%d.txt", differentiator->dump_info.directory, differentiator->dump_info.num_html_dump);
+    snprintf(filename_graph, MAX_LEN_NAME, "%s/graphes/graph%d.txt", language->dump_info.directory, language->dump_info.num_html_dump);
 
     FILE* graph = fopen(filename_graph, "w");
     if (graph == NULL)
@@ -220,7 +274,7 @@ Tree_status GenerateGraph(Differentiator* differentiator, Tree_node* tree_node) 
     fprintf(graph, "    node [shape = Mrecord, style = filled, fillcolor = \"#99FF99\"];\n");
 
     if (tree_node != NULL) {
-        PrintNodeToDot(differentiator, graph, tree_node);
+        PrintNodeToDot(language, graph, tree_node);
     } 
     else {
         fprintf(graph, "There will be no tree\n");
@@ -234,18 +288,18 @@ Tree_status GenerateGraph(Differentiator* differentiator, Tree_node* tree_node) 
     return SUCCESS;
 }
 
-void PrintNodeToDot(Differentiator* differentiator, FILE *file, Tree_node* tree_node) {
-    assert(differentiator);
+void PrintNodeToDot(Language* language, FILE *file, Tree_node* tree_node) {
+    assert(language);
     assert(file);
 
     if (tree_node->type == NUMBER) {
-        fprintf(file, "    node_%p [label=\"{%p | type = Number | value = '%lg' | left = %p | right = %p}\"];\n", 
+        fprintf(file, "    node_%p [label=\"{%p | type = Number | value = '%d' | left = %p | right = %p}\"];\n", 
                       (void *)tree_node, tree_node, tree_node->value.number, tree_node->left_node, tree_node->right_node);
     }    
 
     else if (tree_node->type == VARIABLE) {
         fprintf(file, "    node_%p [label=\"{%p | type = Variable | value = '%s' (%lg) | left = %p | right = %p}\"];\n", 
-                      (void *)tree_node, tree_node, NameOfVariable(differentiator, tree_node), ValueOfVariable(differentiator, tree_node), 
+                      (void *)tree_node, tree_node, NameOfVariable(language, tree_node), ValueOfVariable(language, tree_node), 
                       tree_node->left_node, tree_node->right_node);
     }
 
@@ -257,12 +311,12 @@ void PrintNodeToDot(Differentiator* differentiator, FILE *file, Tree_node* tree_
 
     if (tree_node->left_node) {
         fprintf(file, "    node_%p -> node_%p [label = \"Yes\", color = \"#FF6600\"];\n ", (void *)tree_node, (void *)tree_node->left_node);
-        PrintNodeToDot(differentiator, file, tree_node->left_node);
+        PrintNodeToDot(language, file, tree_node->left_node);
     }
 
     if (tree_node->right_node) {
         fprintf(file, "    node_%p -> node_%p [label = \"No\", color = \"#0000CC\"];\n", (void *)tree_node, (void *)tree_node->right_node);
-        PrintNodeToDot(differentiator, file, tree_node->right_node);
+        PrintNodeToDot(language, file, tree_node->right_node);
     }
 }
 
@@ -270,16 +324,10 @@ void PrintErrors(int error, FILE* stream) {
     assert(stream);
 
     if (error == SUCCESS                  ) fprintf(stream, "ALL_RIGHT\n");
-    if (error == NULL_POINTER_ON_TREE     ) fprintf(stream, "Null pointer on tree\n");
-    if (error == NULL_POINTER_ON_NODE     ) fprintf(stream, "Null pointer on node\n");
     if (error == MEMORY_ERROR             ) fprintf(stream, "Not enough memory\n");
     if (error == OPEN_ERROR               ) fprintf(stream, "Open error\n");
     if (error == CLOSE_ERROR              ) fprintf(stream, "Close error\n");
     if (error == EXECUTION_FAILED         ) fprintf(stream, "Execution failed\n");
     if (error == WRONG_SITUATION          ) fprintf(stream, "Left node is NULL, but right node not OR right node is NULL, but left node not\n");
     if (error == READ_ERROR               ) fprintf(stream, "Scanf can't read user's answers\n");
-    if (error == WRONG_SIZE               ) fprintf(stream, "Size of tree is wrong\n");
-    if (error == PARENT_AND_CHILD_UNEQUAL ) fprintf(stream, "Parent's chils is unequal with current node\n");
-    if (error == WRONG_ROOT               ) fprintf(stream, "Node is root, but its parent isn't NULL\n");
-    if (error == WRONG_NODE               ) fprintf(stream, "Node isn't root, but its parent is NULL\n");
 }
