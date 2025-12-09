@@ -16,7 +16,6 @@
 #define DUMP_CURRENT_SITUATION(node)                                                        \
 {                                                                                           \
         TreeHTMLDump(language, node, DUMP_INFO, NOT_ERROR_DUMP);                            \
-        TreeHTMLDumpArrayTokens(language, *number_token, DUMP_INFO);                        \
 }
 
 

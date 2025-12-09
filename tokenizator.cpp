@@ -27,9 +27,10 @@ Tree_status Tokenizator(Language* language, const char* file_name) {
 
     Tree_node* tree_node = NULL;
 
-    while (*str != '$' && str < language->end_buffer) {
-        if ('0' <= *str && *str <= '9')
+    while (str < language->end_buffer) {
+        if ('0' <= *str && *str <= '9') {
             tree_node = ReadNumber(&str);
+        }    
 
         else if (('a' <= *str && *str <= 'z') ||
                  ('A' <= *str && *str <= 'Z') ||
@@ -43,6 +44,9 @@ Tree_status Tokenizator(Language* language, const char* file_name) {
                 fprintf(stderr, "%s: cur pos %s\n", __func__, str);
                 TREE_CHECK_AND_RETURN_ERRORS(UNKNOWN_OPERATOR);}
         }
+
+        SkipSpaces(&str);
+        SkipComments(&str);
 
         ArrayPush(&(language->array_with_tokens), &tree_node);
     }
@@ -59,9 +63,6 @@ Tree_node* ReadNumber(char** str) {
         val = val * 10 + (**str - '0');
         (*str)++;
     }
-
-    SkipSpaces(str);
-    SkipComments(str);
 
     return NODE_NUMBER_CTOR(val);
 }
@@ -81,11 +82,16 @@ Tree_node* ReadVariable(Language* language, char** str) {
     unsigned long hash_variable = hash_djb2(name_variable);
 
     tree_node = CheckKeyWords(name_variable, hash_variable);
-    if (tree_node != NULL) {free(name_variable); return tree_node;}
+    if (tree_node != NULL) {
+        free(name_variable); 
+
+        return tree_node;
+    }
 
     for (size_t i = 0; i < language->array_with_variables.size; ++i) {
         if (strcmp(name_variable, NameOfVariableFromIndex(language, i)) == 0) {
             free(name_variable);
+
             return NODE_VARIABLE_CTOR((int)i);
         }
     }
@@ -93,9 +99,6 @@ Tree_node* ReadVariable(Language* language, char** str) {
     About_variable about_variable = {.name = name_variable, .value = DEFAULT_VALUE};
 
     ArrayPush(&(language->array_with_variables), &about_variable);
-
-    SkipSpaces(str);
-    SkipComments(str);
 
     return NODE_VARIABLE_CTOR((int)(language->array_with_variables.size - 1));
 }
@@ -122,15 +125,9 @@ Tree_node* CheckSigns(Language* language, char** str) {
         if (strncmp(*str, signs[i].name, 1) == 0){
             (*str)++;
 
-            SkipSpaces(str);
-            SkipComments(str);
-
             return NODE_OPERATOR_CTOR(signs[i].type);
         }    
     }
-
-    SkipSpaces(str);
-    SkipComments(str);
 
     return NULL;
 }

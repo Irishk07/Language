@@ -48,7 +48,7 @@ Tree_node* LangGetComandir(Language* language, Tree_status* status) {
 
         TreeHTMLDump(language, tree_node, DUMP_INFO, NOT_ERROR_DUMP);
     }
-    while (true);
+    while (number_token < language->array_with_tokens.size);
 
     Tree_node* cur_token = NULL;
     ArrayGetElement(&(language->array_with_tokens), &cur_token, number_token);
@@ -57,6 +57,7 @@ Tree_node* LangGetComandir(Language* language, Tree_status* status) {
         return NULL;
     }
 
+    free(cur_token);
     number_token++;
 
     return tree_node;
@@ -79,11 +80,13 @@ Tree_node* LangGetOperators(Language* language, size_t* number_token, Tree_statu
     DUMP_CURRENT_SITUATION(tree_node);
 
     Tree_node* cur_token = NULL;
-    ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token);
+    ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token); // maybe there {
     if (cur_token->type == OPERATOR && cur_token->value.operators == OPERATOR_OPEN_FIGURE) {
+        free(cur_token);
         (*number_token)++;
 
-        while((cur_token->type == OPERATOR && cur_token->value.operators == OPERATOR_OPEN_FIGURE) == 0) {
+        ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token); // maybe there }
+        while((cur_token->type == OPERATOR && cur_token->value.operators == OPERATOR_CLOSE_FIGURE) == 0) {
             Tree_node* tree_node_2 = LangGetOperators(language, number_token, status);
 
             DUMP_CURRENT_SITUATION(tree_node_2);
@@ -97,9 +100,10 @@ Tree_node* LangGetOperators(Language* language, size_t* number_token, Tree_statu
 
             DUMP_CURRENT_SITUATION(tree_node);
 
-            ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token);
+            ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token); // maybe there }
         } 
         
+        free(cur_token);
         (*number_token)++;
     }
 
@@ -113,38 +117,37 @@ Tree_node* LangGetIf(Language* language, size_t* number_token, Tree_status* stat
     assert(status);
 
     Tree_node* cur_token = NULL;
-    ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token);
+    ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token); // maybe there if
 
     if ((cur_token->type == OPERATOR && cur_token->value.operators == OPERATOR_IF) == 0)
         return NULL;
 
     (*number_token) += 1;
+    Tree_node* tree_node_if = cur_token;
 
-    fprintf(stderr, "%s: HERE\n", __func__);
-
-    TreeHTMLDumpArrayTokens(language, *number_token, DUMP_INFO);
-
-    ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token);
+    ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token); // maybe there (
     if (cur_token->type == OPERATOR && cur_token->value.operators == OPERATOR_OPEN_BRACKET) {
+        free(cur_token);
         (*number_token)++;
-
-        fprintf(stderr, "%s: HERE\n", __func__);
 
         Tree_node* tree_node = LangGetExpression(language, number_token, status);
 
         DUMP_CURRENT_SITUATION(tree_node);
 
-        ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token);
+        ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token); // maybe there )
         if (cur_token->type == OPERATOR && cur_token->value.operators == OPERATOR_CLOSE_BRACKET) {
+            free(cur_token);
             (*number_token)++;
 
             Tree_node* tree_node_2 = LangGetOperators(language, number_token, status);
 
             DUMP_CURRENT_SITUATION(tree_node_2);
 
-            return NodeCtor(OPERATOR, (type_t){.operators = OPERATOR_IF}, tree_node, tree_node_2);
-        }
+            tree_node_if->left_node = tree_node;
+            tree_node_if->right_node = tree_node_2;
 
+            return tree_node_if;
+        }
     }
     return NULL;
 }
@@ -160,27 +163,31 @@ Tree_node* LangGetAssignment(Language* language, size_t* number_token, Tree_stat
     DUMP_CURRENT_SITUATION(tree_node);
 
     Tree_node* cur_token = NULL;
-    ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token);
+    ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token); // maybe there =
 
     if (cur_token->type == OPERATOR && cur_token->value.operators == OPERATOR_EQUAL) {
         (*number_token)++;
 
         Tree_node* tree_node_2 = LangGetExpression(language, number_token, status);
+        Tree_node* tree_node_equal = cur_token;
 
         DUMP_CURRENT_SITUATION(tree_node_2);
 
-        ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token);
+        ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token); // maybe there ;
 
         if ((cur_token->type == OPERATOR && cur_token->value.operators == OPERATOR_COMMON) == 0)
             return NULL;
 
         (*number_token)++;
 
-        tree_node = NodeCtor(OPERATOR, (type_t){.operators = OPERATOR_EQUAL}, tree_node, tree_node_2);
+        tree_node_equal->left_node = tree_node;
+        tree_node_equal->right_node = tree_node_2;
+
+        cur_token->left_node = tree_node_equal; // left_node of node with ;
 
         DUMP_CURRENT_SITUATION(tree_node);
 
-        return NodeCtor(OPERATOR, (type_t){.operators = OPERATOR_COMMON}, tree_node, NULL);
+        return cur_token;
     }
 
     return NULL;
@@ -195,26 +202,24 @@ Tree_node* LangGetExpression(Language* language, size_t* number_token, Tree_stat
     DUMP_CURRENT_SITUATION(new_node);
 
     Tree_node* cur_token = NULL;
-    ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token);
+    ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token); // maybe there + or -
 
     while (cur_token->type == OPERATOR && (cur_token->value.operators == OPERATOR_ADD || cur_token->value.operators == OPERATOR_SUB)) {
         (*number_token)++;
 
-        fprintf(stderr, "%s: HERE\n", __func__);
-
         Tree_node* new_node_2 = LangGetTerm(language, number_token, status);
+
+        cur_token->left_node = new_node;
+        cur_token->right_node = new_node_2;
 
         DUMP_CURRENT_SITUATION(new_node_2);
 
-        if (cur_token->value.operators == OPERATOR_ADD)
-            new_node = NodeCtor(OPERATOR, (type_t){.operators = OPERATOR_ADD}, new_node, new_node_2);
-        else 
-            new_node = NodeCtor(OPERATOR, (type_t){.operators = OPERATOR_SUB}, new_node, new_node_2);
+        new_node = cur_token;
 
-        ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token);
+        ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token); // maybe there + or -
     }
 
-    DUMP_CURRENT_SITUATION(new_node);
+    DUMP_CURRENT_SITUATION(cur_token);
 
     return new_node;
 }
@@ -223,25 +228,26 @@ Tree_node* LangGetTerm(Language* language, size_t* number_token, Tree_status* st
     assert(language);
     assert(status);
 
-    Tree_node* cur_token = NULL;
-    ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token);
-
     Tree_node* new_node = LangGetPow(language, number_token, status);
 
     DUMP_CURRENT_SITUATION(new_node);
+
+    Tree_node* cur_token = NULL;
+    ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token); 
 
     while (cur_token->type == OPERATOR && (cur_token->value.operators == OPERATOR_DIV || cur_token->value.operators == OPERATOR_MUL)) {
         (*number_token)++;
 
         Tree_node* new_node_2 = LangGetPow(language, number_token, status);
+
+        cur_token->left_node = new_node;
+        cur_token->right_node = new_node_2;
+
         DUMP_CURRENT_SITUATION(new_node_2);
 
-        if (cur_token->value.operators == OPERATOR_MUL)
-            new_node = NodeCtor(OPERATOR, (type_t){.operators = OPERATOR_MUL}, new_node, new_node_2);
-        else 
-            new_node = NodeCtor(OPERATOR, (type_t){.operators = OPERATOR_DIV}, new_node, new_node_2);
+        new_node = cur_token;
 
-        ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token);
+        ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token); // maybe there * or /
     }
 
     DUMP_CURRENT_SITUATION(new_node);
@@ -253,21 +259,26 @@ Tree_node* LangGetPow(Language* language, size_t* number_token, Tree_status* sta
     assert(language);
     assert(status);
 
-    Tree_node* cur_token = NULL;
-    ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token);
-
     Tree_node* new_node = LangGetPrimaryExpression(language, number_token, status);
 
     DUMP_CURRENT_SITUATION(new_node);
+
+    Tree_node* cur_token = NULL;
+    ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token); // maybe there ^
 
     while (cur_token->type == OPERATOR && cur_token->value.operators == OPERATOR_POW) {
         (*number_token)++;
 
         Tree_node* new_node_2 = LangGetPrimaryExpression(language, number_token, status);
-        DUMP_CURRENT_SITUATION(new_node_2);
-        new_node = NodeCtor(OPERATOR, (type_t){.operators = OPERATOR_POW}, new_node, new_node_2);
+        
+        cur_token->left_node = new_node;
+        cur_token->right_node = new_node_2;
 
-        ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token);
+        DUMP_CURRENT_SITUATION(new_node_2);
+
+        new_node = cur_token;
+
+        ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token); // maybe there ^
     }
 
     DUMP_CURRENT_SITUATION(new_node);
@@ -285,14 +296,18 @@ Tree_node* LangGetPrimaryExpression(Language* language, size_t* number_token, Tr
     Tree_node* res_node = NULL;
 
     if (cur_token->type == OPERATOR && cur_token->value.operators == OPERATOR_OPEN_BRACKET) {
+        free(cur_token);
         (*number_token)++;
+
         res_node = LangGetExpression(language, number_token, status);
 
         DUMP_CURRENT_SITUATION(res_node);
 
         ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token);
-        if (cur_token->type == OPERATOR && cur_token->value.operators == OPERATOR_OPEN_BRACKET)
+        if (cur_token->type == OPERATOR && cur_token->value.operators == OPERATOR_CLOSE_BRACKET) {
+            free(cur_token);
             (*number_token)++;
+        }    
         else
             *status = NOT_END_SKOBKA;
     }

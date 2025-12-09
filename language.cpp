@@ -38,6 +38,9 @@ Tree_status LanguageDtor(Language* language) {
     ArrayDtorVariables(language, &language->array_with_variables);
     free(language->array_with_variables.data);
 
+    // ArrayDtorTokens(language, &language->array_with_tokens);
+    free(language->array_with_tokens.data);
+
     LanguageNodeDtor(language, language->tree.root);
 
     return SUCCESS;
@@ -62,8 +65,14 @@ void ArrayDtorVariables(Language* language, Array_with_data* array_with_data) {
     }
 }
 
-void ArrayDtorTokens(Language* language, Array_with_data* array_with_data) {
-    for (size_t i = 0; i < array_with_data->size; ++i) {
-        free(NameOfVariableFromIndex(language, i));
-    }
-}
+// void ArrayDtorTokens(Language* language, Array_with_data* array_with_data) {
+//     for (size_t i = 0; i < array_with_data->size; ++i) {
+//         Tree_node* tree_node = NULL;
+//         ArrayGetElement(array_with_data, &tree_node, i);
+
+//         if (tree_node->type == VARIABLE)
+//             free(NameOfVariableFromIndex(language, i));
+        
+//         free(tree_node);
+//     }
+// }

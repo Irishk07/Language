@@ -235,6 +235,8 @@ Tree_status TreeHTMLDumpArrayTokens(Language* language, size_t number_token, int
     else
         html_dump_file = fopen(language->dump_info.html_dump_filename, "a");
 
+    fprintf(html_dump_file, "(%s: %d)\n", file, line);
+
     for (size_t i = number_token; i < language->array_with_tokens.size; ++i) {
         Tree_node* tree_node = NULL;
         ArrayGetElement(&(language->array_with_tokens), &tree_node, i);
