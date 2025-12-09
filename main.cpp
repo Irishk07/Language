@@ -22,6 +22,8 @@ int main(int, char** argv) {
 
     language.tree.root = LangGetComandir(&language, &status);
 
+    CreatePreOrderTreeFile(&language, "tree.txt");
+
     TreeHTMLDump(&language, language.tree.root, DUMP_INFO, NOT_ERROR_DUMP);
 
     LanguageDtor(&language);

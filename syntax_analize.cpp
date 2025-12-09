@@ -15,7 +15,8 @@
 // +++++++++++++++++|||||+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Comandir          ::= Operators+ '$'
 // Operators         ::= {Assignment | IF | '{'Operators+'}' } ';'
-// IF                ::= "if" '('E')'Operators
+// WhileOrIf         ::= ["if", "while"]'('E')'Operators
+// WHILE             ::= "while" '('E')'Operators
 // Assignment        ::= Variable'='Expression
 // Expression        ::= Term{[+ -]Term}*
 // Term              ::= Pow{[* /]Pow}*
@@ -41,10 +42,12 @@ Tree_node* LangGetComandir(Language* language, Tree_status* status) {
         if (tree_node_2 == NULL)
             break;
 
-        if (tree_node != NULL && tree_node->right_node == NULL)
+        if (tree_node == NULL)
+            tree_node = NodeCtor(OPERATOR, (type_t){.operators = OPERATOR_COMMON}, tree_node_2, NULL);
+        else if (tree_node->right_node == NULL)
             tree_node->right_node = tree_node_2;
         else
-            tree_node = NodeCtor(OPERATOR, (type_t){.operators = OPERATOR_COMMON}, tree_node_2, tree_node);
+            tree_node = NodeCtor(OPERATOR, (type_t){.operators = OPERATOR_COMMON}, tree_node, tree_node_2);
 
         TreeHTMLDump(language, tree_node, DUMP_INFO, NOT_ERROR_DUMP);
     }
@@ -67,16 +70,14 @@ Tree_node* LangGetOperators(Language* language, size_t* number_token, Tree_statu
     assert(language);
     assert(status);
 
-    Tree_node* tree_node = LangGetIf(language, number_token, status);
+    Tree_node* tree_node = LangGetWhileOrIf(language, number_token, status);
     if (tree_node != NULL)
         return tree_node;
-
     DUMP_CURRENT_SITUATION(tree_node);
 
     tree_node = LangGetAssignment(language, number_token, status);
     if (tree_node != NULL)
         return tree_node;
-
     DUMP_CURRENT_SITUATION(tree_node);
 
     Tree_node* cur_token = NULL;
@@ -112,27 +113,25 @@ Tree_node* LangGetOperators(Language* language, size_t* number_token, Tree_statu
     return tree_node;
 }
 
-Tree_node* LangGetIf(Language* language, size_t* number_token, Tree_status* status) {
+Tree_node* LangGetWhileOrIf(Language* language, size_t* number_token, Tree_status* status) {
     assert(language);
     assert(status);
 
     Tree_node* cur_token = NULL;
-    ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token); // maybe there if
+    ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token); // maybe there while or if
 
-    if ((cur_token->type == OPERATOR && cur_token->value.operators == OPERATOR_IF) == 0)
+    if ((cur_token->type == OPERATOR && 
+        (cur_token->value.operators == OPERATOR_WHILE || cur_token->value.operators == OPERATOR_IF)) == 0)
         return NULL;
 
     (*number_token) += 1;
-    Tree_node* tree_node_if = cur_token;
-
+    Tree_node* tree_node_operator = cur_token;
     ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token); // maybe there (
     if (cur_token->type == OPERATOR && cur_token->value.operators == OPERATOR_OPEN_BRACKET) {
         free(cur_token);
         (*number_token)++;
 
         Tree_node* tree_node = LangGetExpression(language, number_token, status);
-
-        DUMP_CURRENT_SITUATION(tree_node);
 
         ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token); // maybe there )
         if (cur_token->type == OPERATOR && cur_token->value.operators == OPERATOR_CLOSE_BRACKET) {
@@ -141,14 +140,13 @@ Tree_node* LangGetIf(Language* language, size_t* number_token, Tree_status* stat
 
             Tree_node* tree_node_2 = LangGetOperators(language, number_token, status);
 
-            DUMP_CURRENT_SITUATION(tree_node_2);
+            tree_node_operator->left_node = tree_node;
+            tree_node_operator->right_node = tree_node_2;
 
-            tree_node_if->left_node = tree_node;
-            tree_node_if->right_node = tree_node_2;
-
-            return tree_node_if;
+            return tree_node_operator;
         }
     }
+
     return NULL;
 }
 

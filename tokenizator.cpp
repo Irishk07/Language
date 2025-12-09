@@ -122,7 +122,7 @@ Tree_node* CheckSigns(Language* language, char** str) {
     assert(str);
     
     for (size_t i = 0; i < sizeof(signs) / sizeof(signs[0]); ++i) {
-        if (strncmp(*str, signs[i].name, 1) == 0){
+        if (strncmp(*str, signs[i].name, strlen(signs[i].name)) == 0){
             (*str)++;
 
             return NODE_OPERATOR_CTOR(signs[i].type);

@@ -295,29 +295,28 @@ void PrintNodeToDot(Language* language, FILE *file, Tree_node* tree_node) {
     assert(file);
 
     if (tree_node->type == NUMBER) {
-        fprintf(file, "    node_%p [label=\"{%p | type = Number | value = '%d' | left = %p | right = %p}\"];\n", 
-                      (void *)tree_node, tree_node, tree_node->value.number, tree_node->left_node, tree_node->right_node);
+        fprintf(file, "    node_%p [label=\"{'%d'}\", fillcolor = \"#99FF99\"];\n", 
+                      (void *)tree_node, tree_node->value.number);
     }    
 
     else if (tree_node->type == VARIABLE) {
-        fprintf(file, "    node_%p [label=\"{%p | type = Variable | value = '%s' (%lg) | left = %p | right = %p}\"];\n", 
-                      (void *)tree_node, tree_node, NameOfVariable(language, tree_node), ValueOfVariable(language, tree_node), 
-                      tree_node->left_node, tree_node->right_node);
+        fprintf(file, "    node_%p [label=\"{'%s' (%lg)}\", fillcolor = \"#99c0ffff\"];\n", 
+                      (void *)tree_node, NameOfVariable(language, tree_node), ValueOfVariable(language, tree_node));
     }
 
     else if (tree_node->type != WRONG_TYPE) {
-        fprintf(file, "    node_%p [label=\"{%p | type = Operator | value = '%s' | left = %p | right = %p}\"];\n", 
-                      (void *)tree_node, tree_node, IndetifySign(tree_node), tree_node->left_node, tree_node->right_node);
+        fprintf(file, "    node_%p [label=\"{'%s'}\", fillcolor = \"#ff99ffff\"];\n", 
+                      (void *)tree_node, IndetifySign(tree_node));
     }  
 
 
     if (tree_node->left_node) {
-        fprintf(file, "    node_%p -> node_%p [label = \"Yes\", color = \"#FF6600\"];\n ", (void *)tree_node, (void *)tree_node->left_node);
+        fprintf(file, "    node_%p -> node_%p [color = \"#FF6600\"];\n ", (void *)tree_node, (void *)tree_node->left_node);
         PrintNodeToDot(language, file, tree_node->left_node);
     }
 
     if (tree_node->right_node) {
-        fprintf(file, "    node_%p -> node_%p [label = \"No\", color = \"#0000CC\"];\n", (void *)tree_node, (void *)tree_node->right_node);
+        fprintf(file, "    node_%p -> node_%p [color = \"#0000CC\"];\n", (void *)tree_node, (void *)tree_node->right_node);
         PrintNodeToDot(language, file, tree_node->right_node);
     }
 }

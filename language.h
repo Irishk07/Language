@@ -6,13 +6,15 @@
 
 Tree_status LanguageCtor(Language* language, const char* html_dump_filename, const char* directory);
 
+Tree_status CreatePreOrderTreeFile(Language* language, const char* name_file_with_tree);
+
+void PrintPreOrderTreeToFile(Language* language, Tree_node* tree_node, FILE* stream);
+
 Tree_status LanguageDtor(Language* language);
 
 void LanguageNodeDtor(Language* language, Tree_node* tree_node);
 
 void ArrayDtorVariables(Language* language, Array_with_data* array_with_data);
-
-void ArrayDtorTokens(Language* language, Array_with_data* array_with_data);
 
 
 #endif // LANGUAGE_H_

@@ -8,7 +8,7 @@ Tree_node* LangGetComandir(Language* language, Tree_status* status);
 
 Tree_node* LangGetOperators(Language* language, size_t* number_token, Tree_status* status);
 
-Tree_node* LangGetIf(Language* language, size_t* number_token, Tree_status* status);
+Tree_node* LangGetWhileOrIf(Language* language, size_t* number_token, Tree_status* status);
 
 Tree_node* LangGetAssignment(Language* language, size_t* number_token, Tree_status* status);
 
