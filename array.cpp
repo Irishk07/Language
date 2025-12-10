@@ -8,9 +8,9 @@
 #include "string_functions.h"
 
 
-Tree_status ArrayCtor(Array_with_data* array_with_data, size_t sizeof_elements, size_t start_capacity) {
-    array_with_data->capacity = start_capacity;
-    array_with_data->size     = 0;
+Tree_status ArrayCtor(Array_with_data* array_with_data, size_t sizeof_elements, size_t start_capacity) { // TODO: checks
+    array_with_data->capacity  = start_capacity;
+    array_with_data->size      = 0;
     array_with_data->elem_size = sizeof_elements;
 
     array_with_data->data = calloc(start_capacity, sizeof_elements);

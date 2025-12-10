@@ -9,6 +9,8 @@
 
 #include "array.h"
 #include "common.h"
+#include "differentiator.h"
+#include "onegin.h"
 #include "tree.h"
 
 
@@ -32,9 +34,12 @@ Tree_status LanguageCtor(Language* language, const char* html_dump_filename, con
     return SUCCESS;
 }
 
-Tree_status CreatePreOrderTreeFile(Language* language, const char* name_file_with_tree) {
+Tree_status CreatePreOrderTreeFile(Language* language, const char* programm_file) {
     assert(language);
-    assert(name_file_with_tree);
+    assert(programm_file);
+
+    char name_file_with_tree[MAX_LEN_NAME] = {};
+    snprintf(name_file_with_tree, MAX_LEN_NAME, "tree_%.*s", MAX_LEN_NAME - 10, programm_file);
 
     FILE* file = fopen(name_file_with_tree, "w");
     if (file == NULL)
@@ -72,9 +77,187 @@ void PrintPreOrderTreeToFile(Language* language, Tree_node* tree_node, FILE* str
     fprintf(stream, ")");
 }
 
-Tree_status LanguageDtor(Language* language) {
-    free(language->begin_buffer);
+Tree_status Middle_end(Language* language, const char* file_with_tree) {
+    assert(language);
+    assert(file_with_tree);
 
+    Tree_node* old_root = language->tree.root;
+
+    ReadPreOrderTreeFile(language, file_with_tree);
+
+    OptimizationTree(language, &language->tree.root);
+
+    CreatePreOrderTreeFile(language, file_with_tree);
+
+    LanguageNodeDtor(language, old_root);
+
+    return SUCCESS;
+}
+
+Tree_status ReadPreOrderTreeFile(Language* language, const char* file_with_tree) {
+    assert(language);
+    assert(file_with_tree);
+
+    TREE_CHECK_AND_RETURN_ERRORS(ReadOnegin(language, file_with_tree));
+
+    char* begin_buffer = language->begin_buffer;
+
+    TREE_CHECK_AND_RETURN_ERRORS(ReadPreOrderNode(language, &language->tree.root, &begin_buffer));
+
+    TREE_CHECK_AND_RETURN_ERRORS(TreeHTMLDump(language, language->tree.root, DUMP_INFO, NOT_ERROR_DUMP));
+
+    free(language->begin_buffer);
+    language->begin_buffer = NULL;
+    language->end_buffer   = NULL;
+    language->size_buffer  = 0;
+
+    return SUCCESS;
+}
+
+Tree_status ReadPreOrderNode(Language* language, Tree_node** tree_node, char** current_pos) {    
+    assert(language);
+    assert(tree_node);
+    assert(current_pos);
+    assert(*current_pos);
+
+    SkipSpaces(current_pos);
+
+    if (*current_pos > language->end_buffer)
+        TREE_CHECK_AND_RETURN_ERRORS(BUFFER_OVERFLOW);
+
+    if (**current_pos == '(') {
+        (*current_pos)++;
+        SkipSpaces(current_pos);
+
+        if (strncmp(*current_pos, "nil", LEN_NIL) == 0) {
+            *current_pos += LEN_NIL;
+            *tree_node = NULL;
+        }
+
+        else {
+            if (**current_pos == '\"') // open_"
+                (*current_pos)++;
+
+            int read_bytes = 0;
+            sscanf(*current_pos, "%*s%n", &read_bytes);
+
+            if (*(*current_pos + read_bytes - 1) == '\"')
+                *(*current_pos + read_bytes - 1) = '\0'; // close_" -> '\0'
+            
+            char* name = strndup(*current_pos, (size_t)read_bytes);
+            type_t value = {.number = 0};
+
+            Type_node type = FindOutType(language, name, &value);
+
+            *tree_node = NodeCtor(type, value, NULL, NULL);
+
+            *current_pos += read_bytes;
+
+            TREE_CHECK_AND_RETURN_ERRORS(ReadPreOrderNode(language, &(*tree_node)->left_node, current_pos));
+
+            TREE_CHECK_AND_RETURN_ERRORS(ReadPreOrderNode(language, &(*tree_node)->right_node, current_pos));
+
+            (*current_pos)++; // ++ because skip ')'
+
+            SkipSpaces(current_pos);
+            free(name);
+        }
+    }
+
+    else if (strncmp(*current_pos, "nil", LEN_NIL) == 0) {
+        *current_pos += LEN_NIL;
+
+        *tree_node = NULL;
+    }
+
+    else {
+        fprintf(stderr, "%s\n", *current_pos);
+        TREE_CHECK_AND_RETURN_ERRORS(SYNTAX_ERROR);
+    }
+
+    return SUCCESS;
+}
+
+Type_node FindOutType(Language* language, const char* name, type_t* value) {
+    assert(language);
+    assert(name);
+    assert(value);
+
+    if (ItIsOperator(name, value) == FIND_YES)
+        return OPERATOR;
+
+    if (ItIsNumber(name, value) == FIND_YES)
+        return NUMBER;
+
+    if (ItIsVariable(language, name, value) == FIND_YES)
+        return VARIABLE;
+
+    return WRONG_TYPE;
+}
+
+Status_of_finding ItIsOperator(const char* name, type_t* value) {
+    assert(name);
+    assert(value);
+
+    unsigned long hash = hash_djb2(name);
+
+    for (size_t i = 0; i < sizeof(key_words) / sizeof(key_words[0]); ++i) {
+        if (hash == key_words[i].hash && strcmp(name, key_words[i].name) == 0) {
+            value->operators = key_words[i].type;
+            return FIND_YES;
+        }
+    }
+
+    for (size_t i = 0; i < sizeof(signs) / sizeof(signs[0]); ++i) {
+        if (hash == signs[i].hash && strcmp(name, signs[i].name) == 0) {
+            value->operators = signs[i].type;
+            return FIND_YES;
+        }
+    }
+
+    return FIND_NO;
+}
+
+Status_of_finding ItIsNumber(const char* name, type_t* value) {
+    assert(name);
+    assert(value);
+
+    char* endptr = NULL;
+    int result = (int)strtol(name, &endptr, 10);
+
+    if (endptr == name || *endptr != '\0')
+        return FIND_NO;
+
+    value->number = result;
+
+    return FIND_YES;
+}
+
+Status_of_finding ItIsVariable(Language* language, const char* name, type_t* value) {
+    assert(language);
+    assert(name);
+    assert(value);
+
+    if (isdigit(*name))
+        return FIND_NO;
+
+    for (size_t i = 0; i < language->array_with_variables.size; ++i) {
+        if (strcmp(name, NameOfVariableFromIndex(language, i)) == 0) {
+            value->index_variable = (int)i;
+            return FIND_YES;
+        }
+    }
+
+    value->index_variable = (int)language->array_with_variables.size;
+    
+    About_variable about_variable = {.name = strdup(name), .value = DEFAULT_VALUE};
+
+    ArrayPush(&(language->array_with_variables), &about_variable);
+    
+    return FIND_YES;
+}
+
+Tree_status LanguageDtor(Language* language) {
     ArrayDtorVariables(language, &language->array_with_variables);
     free(language->array_with_variables.data);
 

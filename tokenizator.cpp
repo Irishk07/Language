@@ -22,7 +22,7 @@ Tree_status Tokenizator(Language* language, const char* file_name) {
     assert(language);
     assert(file_name);
 
-    ReadOnegin(language, file_name);
+    ReadOnegin(language, file_name); // TODO: remove text buffer from struct
     char* str = language->begin_buffer;
 
     Tree_node* tree_node = NULL;
@@ -40,9 +40,10 @@ Tree_status Tokenizator(Language* language, const char* file_name) {
         else {
             tree_node = CheckSigns(language, &str);
 
-            if (tree_node == NULL){
+            if (tree_node == NULL) {
                 fprintf(stderr, "%s: cur pos %s\n", __func__, str);
-                TREE_CHECK_AND_RETURN_ERRORS(UNKNOWN_OPERATOR);}
+                TREE_CHECK_AND_RETURN_ERRORS(UNKNOWN_OPERATOR);
+            }
         }
 
         SkipSpaces(&str);
@@ -50,6 +51,11 @@ Tree_status Tokenizator(Language* language, const char* file_name) {
 
         ArrayPush(&(language->array_with_tokens), &tree_node);
     }
+
+    free(language->begin_buffer);
+    language->begin_buffer = NULL;
+    language->end_buffer = NULL;
+    language->size_buffer = 0;
 
     return SUCCESS;
 }
@@ -59,7 +65,7 @@ Tree_node* ReadNumber(char** str) {
 
     int val = 0;
 
-    while ('0' <= **str && **str <= '9') {
+    while ('0' <= **str && **str <= '9') { // TODO: scanf
         val = val * 10 + (**str - '0');
         (*str)++;
     }
@@ -68,6 +74,7 @@ Tree_node* ReadNumber(char** str) {
 }
 
 Tree_node* ReadVariable(Language* language, char** str) {
+    assert(language);
     assert(str);
 
     char* first_symbol = *str;

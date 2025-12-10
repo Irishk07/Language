@@ -127,6 +127,11 @@ enum Tree_status {
     UNKNOWN_OPERATOR         = 14
 };
 
+enum Status_of_finding {
+    FIND_NO  = 0,
+    FIND_YES = 1
+};
+
 
 struct Tree_node {
     Type_node type;
@@ -139,7 +144,6 @@ struct Dump_information {
     const char* html_dump_filename;
     const char* directory;
     int num_html_dump = 0;
-    FILE* tex_dump_file;
 };
 
 struct Tree {

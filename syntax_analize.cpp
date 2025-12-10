@@ -14,15 +14,15 @@
 
 // +++++++++++++++++|||||+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Comandir          ::= Operators+ '$'
-// Operators         ::= {Assignment | IF | '{'Operators+'}' } ';'
-// WhileOrIf         ::= ["if", "while"]'('E')'Operators Else?
+// Operators         ::= { Assignment | IF | '{'Operators+'}' } ';'                                                       // | print
+// WhileOrIf         ::= ["if", "while"]'('Expression')'Operators Else?
 // Else              ::= "else" Operators
 // Assignment        ::= Variable'='Expression
 // Expression        ::= Term{[+ -]Term}*
 // Term              ::= Pow{[* /]Pow}*
-// Pow               ::= Assignment{[^]Assignment}*
-// PrimaryExpression ::= '('Expression')' | Number | Variable | Function
-// Numper            ::= [0-9]+
+// Pow               ::= PrimaryExpression{[^]PrimaryExpression}*
+// PrimaryExpression ::= '('Expression')' | Number | Variable | Function                                                 // | scanf
+// Number            ::= [0-9]+
 // Variable          ::= [a-zA-Z_][a-zA-z0-9_]*
 // Function          ::= [ln, sin, cos, tg, ctg, arcsin, arccos, arctg, arcctg, sh, ch, th, cth]'('Expression')'
 // +++++++++++++++++|||||+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -88,7 +88,7 @@ Tree_node* LangGetOperators(Language* language, size_t* number_token, Tree_statu
 
         ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token); // maybe there }
         while((cur_token->type == OPERATOR && cur_token->value.operators == OPERATOR_CLOSE_FIGURE) == 0) {
-            Tree_node* tree_node_2 = LangGetOperators(language, number_token, status);
+            Tree_node* tree_node_2 = LangGetOperators(language, number_token, status); // TODO rename tree_node_2
 
             DUMP_CURRENT_SITUATION(tree_node_2);
 
