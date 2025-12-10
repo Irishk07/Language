@@ -121,6 +121,7 @@ const char* IndetifySign(Tree_node* tree_node) {
                 case OPERATOR_COMMON: return ";";
                 case OPERATOR_IF:     return "if";
                 case OPERATOR_WHILE:  return "while";
+                case OPERATOR_ELSE:   return "else";
                 case OPERATOR_OPEN_BRACKET:  return "(";
                 case OPERATOR_CLOSE_BRACKET: return ")";
                 case OPERATOR_OPEN_FIGURE:   return "{";

@@ -15,8 +15,8 @@
 // +++++++++++++++++|||||+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Comandir          ::= Operators+ '$'
 // Operators         ::= {Assignment | IF | '{'Operators+'}' } ';'
-// WhileOrIf         ::= ["if", "while"]'('E')'Operators
-// WHILE             ::= "while" '('E')'Operators
+// WhileOrIf         ::= ["if", "while"]'('E')'Operators Else?
+// Else              ::= "else" Operators
 // Assignment        ::= Variable'='Expression
 // Expression        ::= Term{[+ -]Term}*
 // Term              ::= Pow{[* /]Pow}*
@@ -124,8 +124,8 @@ Tree_node* LangGetWhileOrIf(Language* language, size_t* number_token, Tree_statu
         (cur_token->value.operators == OPERATOR_WHILE || cur_token->value.operators == OPERATOR_IF)) == 0)
         return NULL;
 
-    (*number_token) += 1;
-    Tree_node* tree_node_operator = cur_token;
+    (*number_token)++;
+    Tree_node* tree_node_operator = cur_token; // there while or if
     ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token); // maybe there (
     if (cur_token->type == OPERATOR && cur_token->value.operators == OPERATOR_OPEN_BRACKET) {
         free(cur_token);
@@ -142,12 +142,33 @@ Tree_node* LangGetWhileOrIf(Language* language, size_t* number_token, Tree_statu
 
             tree_node_operator->left_node = tree_node;
             tree_node_operator->right_node = tree_node_2;
-
-            return tree_node_operator;
         }
     }
 
-    return NULL;
+    if (tree_node_operator->value.operators == OPERATOR_IF)
+        return LangGetElse(language, number_token, status, tree_node_operator);
+
+    return tree_node_operator;
+}
+
+Tree_node* LangGetElse(Language* language, size_t* number_token, Tree_status* status, Tree_node* tree_node_operator) {
+    assert(language);
+    assert(status);
+
+    Tree_node* cur_token = NULL;
+    ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token); // maybe there else
+
+    if (cur_token->type == OPERATOR && cur_token->value.operators == OPERATOR_ELSE) {
+        (*number_token)++;
+
+        Tree_node* tree_node_2 = LangGetOperators(language, number_token, status);
+
+        cur_token->left_node  = tree_node_operator->right_node;  // value if
+        cur_token->right_node = tree_node_2; // value else
+        tree_node_operator->right_node = cur_token;
+    }
+
+    return tree_node_operator;
 }
 
 Tree_node* LangGetAssignment(Language* language, size_t* number_token, Tree_status* status) {
@@ -195,9 +216,9 @@ Tree_node* LangGetExpression(Language* language, size_t* number_token, Tree_stat
     assert(language);
     assert(status);
 
-    Tree_node* new_node = LangGetTerm(language, number_token, status);
+    Tree_node* tree_node = LangGetTerm(language, number_token, status);
 
-    DUMP_CURRENT_SITUATION(new_node);
+    DUMP_CURRENT_SITUATION(tree_node);
 
     Tree_node* cur_token = NULL;
     ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token); // maybe there + or -
@@ -205,30 +226,30 @@ Tree_node* LangGetExpression(Language* language, size_t* number_token, Tree_stat
     while (cur_token->type == OPERATOR && (cur_token->value.operators == OPERATOR_ADD || cur_token->value.operators == OPERATOR_SUB)) {
         (*number_token)++;
 
-        Tree_node* new_node_2 = LangGetTerm(language, number_token, status);
+        Tree_node* tree_node_2 = LangGetTerm(language, number_token, status);
 
-        cur_token->left_node = new_node;
-        cur_token->right_node = new_node_2;
+        cur_token->left_node = tree_node;
+        cur_token->right_node = tree_node_2;
 
-        DUMP_CURRENT_SITUATION(new_node_2);
+        DUMP_CURRENT_SITUATION(tree_node_2);
 
-        new_node = cur_token;
+        tree_node = cur_token;
 
         ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token); // maybe there + or -
     }
 
     DUMP_CURRENT_SITUATION(cur_token);
 
-    return new_node;
+    return tree_node;
 }
 
 Tree_node* LangGetTerm(Language* language, size_t* number_token, Tree_status* status) {
     assert(language);
     assert(status);
 
-    Tree_node* new_node = LangGetPow(language, number_token, status);
+    Tree_node* tree_node = LangGetPow(language, number_token, status);
 
-    DUMP_CURRENT_SITUATION(new_node);
+    DUMP_CURRENT_SITUATION(tree_node);
 
     Tree_node* cur_token = NULL;
     ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token); 
@@ -236,30 +257,30 @@ Tree_node* LangGetTerm(Language* language, size_t* number_token, Tree_status* st
     while (cur_token->type == OPERATOR && (cur_token->value.operators == OPERATOR_DIV || cur_token->value.operators == OPERATOR_MUL)) {
         (*number_token)++;
 
-        Tree_node* new_node_2 = LangGetPow(language, number_token, status);
+        Tree_node* tree_node_2 = LangGetPow(language, number_token, status);
 
-        cur_token->left_node = new_node;
-        cur_token->right_node = new_node_2;
+        cur_token->left_node = tree_node;
+        cur_token->right_node = tree_node_2;
 
-        DUMP_CURRENT_SITUATION(new_node_2);
+        DUMP_CURRENT_SITUATION(tree_node_2);
 
-        new_node = cur_token;
+        tree_node = cur_token;
 
         ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token); // maybe there * or /
     }
 
-    DUMP_CURRENT_SITUATION(new_node);
+    DUMP_CURRENT_SITUATION(tree_node);
 
-    return new_node;
+    return tree_node;
 }
 
 Tree_node* LangGetPow(Language* language, size_t* number_token, Tree_status* status) {
     assert(language);
     assert(status);
 
-    Tree_node* new_node = LangGetPrimaryExpression(language, number_token, status);
+    Tree_node* tree_node = LangGetPrimaryExpression(language, number_token, status);
 
-    DUMP_CURRENT_SITUATION(new_node);
+    DUMP_CURRENT_SITUATION(tree_node);
 
     Tree_node* cur_token = NULL;
     ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token); // maybe there ^
@@ -267,21 +288,21 @@ Tree_node* LangGetPow(Language* language, size_t* number_token, Tree_status* sta
     while (cur_token->type == OPERATOR && cur_token->value.operators == OPERATOR_POW) {
         (*number_token)++;
 
-        Tree_node* new_node_2 = LangGetPrimaryExpression(language, number_token, status);
+        Tree_node* tree_node_2 = LangGetPrimaryExpression(language, number_token, status);
         
-        cur_token->left_node = new_node;
-        cur_token->right_node = new_node_2;
+        cur_token->left_node = tree_node;
+        cur_token->right_node = tree_node_2;
 
-        DUMP_CURRENT_SITUATION(new_node_2);
+        DUMP_CURRENT_SITUATION(tree_node_2);
 
-        new_node = cur_token;
+        tree_node = cur_token;
 
         ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token); // maybe there ^
     }
 
-    DUMP_CURRENT_SITUATION(new_node);
+    DUMP_CURRENT_SITUATION(tree_node);
 
-    return new_node;
+    return tree_node;
 }
 
 Tree_node* LangGetPrimaryExpression(Language* language, size_t* number_token, Tree_status* status) {
@@ -291,15 +312,15 @@ Tree_node* LangGetPrimaryExpression(Language* language, size_t* number_token, Tr
     Tree_node* cur_token = NULL;
     ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token);
 
-    Tree_node* res_node = NULL;
+    Tree_node* tree_node = NULL;
 
     if (cur_token->type == OPERATOR && cur_token->value.operators == OPERATOR_OPEN_BRACKET) {
         free(cur_token);
         (*number_token)++;
 
-        res_node = LangGetExpression(language, number_token, status);
+        tree_node = LangGetExpression(language, number_token, status);
 
-        DUMP_CURRENT_SITUATION(res_node);
+        DUMP_CURRENT_SITUATION(tree_node);
 
         ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token);
         if (cur_token->type == OPERATOR && cur_token->value.operators == OPERATOR_CLOSE_BRACKET) {
@@ -311,22 +332,22 @@ Tree_node* LangGetPrimaryExpression(Language* language, size_t* number_token, Tr
     }
 
     else {
-        res_node = LangGetNumber(language, number_token, status);
-        if (res_node != NULL)
-            return res_node;
+        tree_node = LangGetNumber(language, number_token, status);
+        if (tree_node != NULL)
+            return tree_node;
 
-        res_node = LangGetVariable(language, number_token, status);
-        if (res_node != NULL)
-            return res_node;
+        tree_node = LangGetVariable(language, number_token, status);
+        if (tree_node != NULL)
+            return tree_node;
 
-        res_node = LangGetFunction(language, number_token, status);
-        if (res_node != NULL)
-            return res_node;
+        tree_node = LangGetFunction(language, number_token, status);
+        if (tree_node != NULL)
+            return tree_node;
     }
 
-    DUMP_CURRENT_SITUATION(res_node);
+    DUMP_CURRENT_SITUATION(tree_node);
 
-    return res_node;
+    return tree_node;
 }
 
 Tree_node* LangGetNumber(Language* language, size_t* number_token, Tree_status* status) {
@@ -373,7 +394,7 @@ Tree_node* LangGetFunction(Language* language, size_t* number_token, Tree_status
                 (key_words[i].type != OPERATOR_IF && key_words[i].type != OPERATOR_WHILE)) {
                     (*number_token)++;
                     return tree_node;
-                }
+            }
         }
     }
 

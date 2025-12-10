@@ -59,6 +59,7 @@ enum Type_operators {
     OPERATOR_OPEN_FIGURE   = 25,
     OPERATOR_CLOSE_FIGURE  = 26,
     OPERATOR_FINISH_SYMBOL = 27,
+    OPERATOR_ELSE  = 28,
     WRONG_OPERATOR
 };
 
@@ -85,7 +86,8 @@ About_function const key_words[] = {{.name = "ln",     .type = OPERATOR_LN,     
                                     {.name = "th",     .type = OPERATOR_TH,     .hash = hash_djb2("th")},
                                     {.name = "cth",    .type = OPERATOR_CTH,    .hash = hash_djb2("cth")},
                                     {.name = "if",     .type = OPERATOR_IF,     .hash = hash_djb2("if")},
-                                    {.name = "while",  .type = OPERATOR_WHILE,  .hash = hash_djb2("while")}};
+                                    {.name = "while",  .type = OPERATOR_WHILE,  .hash = hash_djb2("while")},
+                                    {.name = "else",   .type = OPERATOR_ELSE,   .hash = hash_djb2("else")}};
 
 About_function const signs[] = {{.name = "+", .type = OPERATOR_ADD,           .hash = hash_djb2("+")},
                                 {.name = "-", .type = OPERATOR_SUB,           .hash = hash_djb2("-")}, 
