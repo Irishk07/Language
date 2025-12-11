@@ -4,7 +4,7 @@
 
 #include "array.h"
 
-#include "common.h"
+#include "../common.h"
 #include "string_functions.h"
 
 

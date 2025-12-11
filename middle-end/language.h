@@ -1,18 +1,29 @@
 #ifndef LANGUAGE_H_
 #define LANGUAGE_H_
 
-#include "common.h"
+#include "../common.h"
 
 
-Tree_status LanguageCtor(Language* language, const char* html_dump_filename, const char* directory);
+struct Language {
+    Tree tree;
+    Array_with_data array_with_variables;
+    const char* tree_file;
+    char* begin_buffer;
+    char* end_buffer;
+    size_t size_buffer;
+    Dump_information dump_info;
+};
 
-Tree_status CreatePreOrderTreeFile(Language* language, const char* programm_file);
+
+Tree_status LanguageCtor(Language* language, const char* html_dump_filename, const char* directory, const char* tree_file);
+
+Tree_status Middle_end(Language* language);
+
+Tree_status CreatePreOrderTreeFile(Language* language);
 
 void PrintPreOrderTreeToFile(Language* language, Tree_node* tree_node, FILE* stream);
 
-Tree_status Middle_end(Language* language, const char* file_with_tree);
-
-Tree_status ReadPreOrderTreeFile(Language* language, const char* file_with_tree);
+Tree_status ReadPreOrderTreeFile(Language* language);
 
 Tree_status ReadPreOrderNode(Language* language, Tree_node** tree_node, char** current_pos);
 

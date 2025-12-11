@@ -8,13 +8,13 @@
 #include "language.h"
 
 #include "array.h"
-#include "common.h"
+#include "../common.h"
 #include "differentiator.h"
 #include "onegin.h"
 #include "tree.h"
 
 
-Tree_status LanguageCtor(Language* language, const char* html_dump_filename, const char *directory) {
+Tree_status LanguageCtor(Language* language, const char* html_dump_filename, const char *directory, const char* tree_file) {
     assert(language);
     assert(html_dump_filename);
     assert(directory);
@@ -23,25 +23,37 @@ Tree_status LanguageCtor(Language* language, const char* html_dump_filename, con
     language->end_buffer   = NULL;
     language->size_buffer  = 0;
 
+    language->tree_file = tree_file;
+
     language->dump_info.html_dump_filename = html_dump_filename;
     language->dump_info.directory          = directory;
 
     language->array_with_variables = {};
     ArrayCtor(&(language->array_with_variables), sizeof(About_variable), DEFAULT_START_CAPACITY);
-    language->array_with_tokens = {};
-    ArrayCtor(&(language->array_with_tokens), sizeof(Tree_node*), DEFAULT_START_CAPACITY);
 
     return SUCCESS;
 }
 
-Tree_status CreatePreOrderTreeFile(Language* language, const char* programm_file) {
+Tree_status Middle_end(Language* language) {
     assert(language);
-    assert(programm_file);
 
-    char name_file_with_tree[MAX_LEN_NAME] = {};
-    snprintf(name_file_with_tree, MAX_LEN_NAME, "tree_%.*s", MAX_LEN_NAME - 10, programm_file);
+    Tree_node* old_root = language->tree.root;
 
-    FILE* file = fopen(name_file_with_tree, "w");
+    ReadPreOrderTreeFile(language);
+
+    OptimizationTree(language, &language->tree.root);
+
+    CreatePreOrderTreeFile(language);
+
+    LanguageNodeDtor(language, old_root);
+
+    return SUCCESS;
+}
+
+Tree_status CreatePreOrderTreeFile(Language* language) {
+    assert(language);
+
+    FILE* file = fopen(language->tree_file, "w");
     if (file == NULL)
         TREE_CHECK_AND_RETURN_ERRORS(OPEN_ERROR);
 
@@ -77,28 +89,10 @@ void PrintPreOrderTreeToFile(Language* language, Tree_node* tree_node, FILE* str
     fprintf(stream, ")");
 }
 
-Tree_status Middle_end(Language* language, const char* file_with_tree) {
+Tree_status ReadPreOrderTreeFile(Language* language) {
     assert(language);
-    assert(file_with_tree);
 
-    Tree_node* old_root = language->tree.root;
-
-    ReadPreOrderTreeFile(language, file_with_tree);
-
-    OptimizationTree(language, &language->tree.root);
-
-    CreatePreOrderTreeFile(language, file_with_tree);
-
-    LanguageNodeDtor(language, old_root);
-
-    return SUCCESS;
-}
-
-Tree_status ReadPreOrderTreeFile(Language* language, const char* file_with_tree) {
-    assert(language);
-    assert(file_with_tree);
-
-    TREE_CHECK_AND_RETURN_ERRORS(ReadOnegin(language, file_with_tree));
+    TREE_CHECK_AND_RETURN_ERRORS(ReadOnegin(language, language->tree_file));
 
     char* begin_buffer = language->begin_buffer;
 
@@ -208,13 +202,6 @@ Status_of_finding ItIsOperator(const char* name, type_t* value) {
         }
     }
 
-    for (size_t i = 0; i < sizeof(signs) / sizeof(signs[0]); ++i) {
-        if (hash == signs[i].hash && strcmp(name, signs[i].name) == 0) {
-            value->operators = signs[i].type;
-            return FIND_YES;
-        }
-    }
-
     return FIND_NO;
 }
 
@@ -260,8 +247,6 @@ Status_of_finding ItIsVariable(Language* language, const char* name, type_t* val
 Tree_status LanguageDtor(Language* language) {
     ArrayDtorVariables(language, &language->array_with_variables);
     free(language->array_with_variables.data);
-
-    free(language->array_with_tokens.data);
 
     LanguageNodeDtor(language, language->tree.root);
 

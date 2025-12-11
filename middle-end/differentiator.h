@@ -7,7 +7,8 @@
 #define POW ^
 #define DIV /
 
-#include "common.h"
+#include "../common.h"
+#include "language.h"
 
 
 const double EPS = 1e-10;

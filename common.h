@@ -18,6 +18,9 @@
         TreeHTMLDump(language, node, DUMP_INFO, NOT_ERROR_DUMP);                            \
 }
 
+#define DUMP_INFO __LINE__, __FILE__
+#define NOT_ERROR_DUMP USUAL_DUMP, SUCCESS
+
 
 const int CNT_ATTEMPTS  = 5;
 const int DEFAULT_VALUE = 666;
@@ -87,21 +90,19 @@ About_function const key_words[] = {{.name = "ln",     .type = OPERATOR_LN,     
                                     {.name = "cth",    .type = OPERATOR_CTH,    .hash = hash_djb2("cth")},
                                     {.name = "if",     .type = OPERATOR_IF,     .hash = hash_djb2("if")},
                                     {.name = "while",  .type = OPERATOR_WHILE,  .hash = hash_djb2("while")},
-                                    {.name = "else",   .type = OPERATOR_ELSE,   .hash = hash_djb2("else")}};
-
-About_function const signs[] = {{.name = "+", .type = OPERATOR_ADD,           .hash = hash_djb2("+")},
-                                {.name = "-", .type = OPERATOR_SUB,           .hash = hash_djb2("-")}, 
-                                {.name = "/", .type = OPERATOR_DIV,           .hash = hash_djb2("/")},
-                                {.name = "*", .type = OPERATOR_MUL,           .hash = hash_djb2("*")},
-                                {.name = "^", .type = OPERATOR_POW,           .hash = hash_djb2("^")},
-                                {.name = ";", .type = OPERATOR_COMMON,        .hash = hash_djb2(";")},
-                                {.name = "(", .type = OPERATOR_OPEN_BRACKET,  .hash = hash_djb2("(")},
-                                {.name = ")", .type = OPERATOR_CLOSE_BRACKET, .hash = hash_djb2(")")},
-                                {.name = "{", .type = OPERATOR_OPEN_FIGURE,   .hash = hash_djb2("{")},
-                                {.name = "}", .type = OPERATOR_CLOSE_FIGURE,  .hash = hash_djb2("}")},
-                                {.name = "=", .type = OPERATOR_EQUAL,         .hash = hash_djb2("=")},
-                                {.name = "$", .type = OPERATOR_FINISH_SYMBOL, .hash = hash_djb2("$")}};
-
+                                    {.name = "else",   .type = OPERATOR_ELSE,   .hash = hash_djb2("else")},
+                                    {.name = "+", .type = OPERATOR_ADD,           .hash = hash_djb2("+")},
+                                    {.name = "-", .type = OPERATOR_SUB,           .hash = hash_djb2("-")}, 
+                                    {.name = "/", .type = OPERATOR_DIV,           .hash = hash_djb2("/")},
+                                    {.name = "*", .type = OPERATOR_MUL,           .hash = hash_djb2("*")},
+                                    {.name = "^", .type = OPERATOR_POW,           .hash = hash_djb2("^")},
+                                    {.name = ";", .type = OPERATOR_COMMON,        .hash = hash_djb2(";")},
+                                    {.name = "(", .type = OPERATOR_OPEN_BRACKET,  .hash = hash_djb2("(")},
+                                    {.name = ")", .type = OPERATOR_CLOSE_BRACKET, .hash = hash_djb2(")")},
+                                    {.name = "{", .type = OPERATOR_OPEN_FIGURE,   .hash = hash_djb2("{")},
+                                    {.name = "}", .type = OPERATOR_CLOSE_FIGURE,  .hash = hash_djb2("}")},
+                                    {.name = "=", .type = OPERATOR_EQUAL,         .hash = hash_djb2("=")},
+                                    {.name = "$", .type = OPERATOR_FINISH_SYMBOL, .hash = hash_djb2("$")}};
 
 union type_t {
     int number;
@@ -168,15 +169,15 @@ struct Array_with_data {
     size_t elem_size;
 };
 
-struct Language {
-    Tree tree;
-    Array_with_data array_with_variables;
-    Array_with_data array_with_tokens;
-    char* end_buffer;
-    size_t size_buffer;
-    char* begin_buffer;
-    Dump_information dump_info;
-};
+// struct Language {
+//     Tree tree;
+//     Array_with_data array_with_variables;
+//     Array_with_data array_with_tokens;
+//     char* end_buffer;
+//     size_t size_buffer;
+//     char* begin_buffer;
+//     Dump_information dump_info;
+// };
 
 
 #endif // COMMON_H_

@@ -1,7 +1,8 @@
 #ifndef SYNTAX_ANALIZE_H_
 #define SYNTAX_ANALIZE_H_
 
-#include "common.h"
+#include "../common.h"
+#include "language.h"
 
 
 Tree_node* LangGetComandir(Language* language, Tree_status* status);
@@ -26,6 +27,6 @@ Tree_node* LangGetNumber(Language* language, size_t* number_token, Tree_status* 
 
 Tree_node* LangGetVariable(Language* language, size_t* number_token, Tree_status*);
 
-Tree_node* LangGetFunction(Language* language, size_t* number_token, Tree_status* status);
+Tree_node* LangGetMathFunction(Language* language, size_t* number_token, Tree_status* status);
 
 #endif // SYNTAX_ANALIZE_H_

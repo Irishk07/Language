@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "common.h"
+#include "../common.h"
 
 
 const size_t DEFAULT_START_CAPACITY = 32; // it must be > 0

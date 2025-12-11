@@ -6,7 +6,8 @@
 #include "tree.h"
 
 #include "array.h"
-#include "common.h"
+#include "../common.h"
+#include "language.h"
 
 
 Tree_status TreeCtor(Tree* tree, const char* html_dump_filename, const char* directory) {
@@ -49,7 +50,7 @@ char* ReadAnswer() {
     if (getline(&answer, &size_buf, stdin) == -1)
         return NULL;
 
-    answer[strlen(answer) - 1] = '\0'; // FIXME no strlen 
+    answer[size_buf - 1] = '\0'; // FIXME no strlen 
 
     return answer;
 }
@@ -222,43 +223,6 @@ Tree_status TreeHTMLDump(Language* language, Tree_node* tree_node, int line, con
 
     if (fclose(html_dump_file) == EOF)
         TREE_CHECK_AND_RETURN_ERRORS(CLOSE_ERROR,      perror("Error is: "));
-
-    return SUCCESS;
-}
-
-Tree_status TreeHTMLDumpArrayTokens(Language* language, size_t number_token, int line, const char* file) {
-    assert(language);
-    assert(file);
-
-    FILE* html_dump_file = NULL;
-    if (language->dump_info.num_html_dump == 0)
-        html_dump_file = fopen(language->dump_info.html_dump_filename, "w");
-    else
-        html_dump_file = fopen(language->dump_info.html_dump_filename, "a");
-
-    fprintf(html_dump_file, "(%s: %d)\n", file, line);
-
-    for (size_t i = number_token; i < language->array_with_tokens.size; ++i) {
-        Tree_node* tree_node = NULL;
-        ArrayGetElement(&(language->array_with_tokens), &tree_node, i);
-        TREE_CHECK_AND_RETURN_ERRORS(GenerateGraph(language, tree_node));
-
-        char command[MAX_LEN_NAME] = {};
-        snprintf(command, MAX_LEN_NAME, "dot %s/graphes/graph%d.txt -T png -o %s/images/image%d.png", 
-                                        language->dump_info.directory, language->dump_info.num_html_dump, 
-                                        language->dump_info.directory, language->dump_info.num_html_dump);
-
-        if (system((const char*)command) != 0)
-            TREE_CHECK_AND_RETURN_ERRORS(EXECUTION_FAILED,      fprintf(html_dump_file, "Error with create image:(\n"));
-
-        fprintf(html_dump_file, "\n");
-        fprintf(html_dump_file, "<img src = %s/images/image%d.png width = 1000px>", language->dump_info.directory, language->dump_info.num_html_dump);
-
-        fprintf(html_dump_file, "\n\n");
-
-    }
-
-    language->dump_info.num_html_dump++;
 
     return SUCCESS;
 }

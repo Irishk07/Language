@@ -5,7 +5,8 @@
 
 #include "onegin.h"
 
-#include "common.h"
+#include "../common.h"
+#include "language.h"
 
 
 int SizeOfText(const char *text_name) {

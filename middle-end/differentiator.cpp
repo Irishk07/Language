@@ -3,7 +3,7 @@
 
 #include "differentiator.h"
 
-#include "common.h"
+#include "../common.h"
 #include "language.h"
 #include "tree.h"
 

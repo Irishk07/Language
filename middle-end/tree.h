@@ -3,20 +3,8 @@
 
 #include <stdio.h>
 
-#include "common.h"
-
-
-#define TREE_DUMP_AND_RETURN_ERRORS(error, ...)                                                  \
-        {                                                                                        \
-            Tree_status now_error = error;                                                       \
-            if (now_error != SUCCESS) {                                                          \
-                TreeHTMLDump(differentiator, differentiator->tree->root, DUMP_INFO, ERROR_DUMP, now_error);      \
-                return now_error;                                                                \
-            }                                                                                    \
-        }
-
-#define DUMP_INFO __LINE__, __FILE__
-#define NOT_ERROR_DUMP USUAL_DUMP, SUCCESS
+#include "../common.h"
+#include "language.h"
 
 
 const int MAX_LEN_NAME = 256;
@@ -55,8 +43,6 @@ void SkipSpaces(char** buffer);
 void SkipComments(char** buffer);
 
 Tree_status TreeHTMLDump(Language* language, Tree_node* tree_node, int line, const char* file, Type_dump type_dump, Tree_status tree_status);
-
-Tree_status TreeHTMLDumpArrayTokens(Language* language, size_t number_token, int line, const char* file);
 
 Tree_status GenerateGraph(Language* language, Tree_node* tree_node);
 
