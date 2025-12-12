@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 #include "../common.h"
-#include "language.h"
+#include "front_end.h"
 
 #define DUMP_INFO __LINE__, __FILE__
 #define NOT_ERROR_DUMP USUAL_DUMP, SUCCESS

@@ -2,7 +2,7 @@
 #define SYNTAX_ANALIZE_H_
 
 #include "../common.h"
-#include "language.h"
+#include "front_end.h"
 
 
 Tree_node* LangGetComandir(Language* language, Tree_status* status);

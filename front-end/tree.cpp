@@ -7,7 +7,7 @@
 
 #include "array.h"
 #include "../common.h"
-#include "language.h"
+#include "front_end.h"
 
 
 Tree_status TreeCtor(Tree* tree, const char* html_dump_filename, const char* directory) {

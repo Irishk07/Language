@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 #include "../common.h"
-#include "language.h"
+#include "middle_end.h"
 
 
 const int MAX_LEN_NAME = 256;

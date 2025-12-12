@@ -6,7 +6,7 @@
 
 #include "array.h"
 #include "../common.h"
-#include "language.h"
+#include "front_end.h"
 #include "onegin.h"
 #include "tree.h"
 

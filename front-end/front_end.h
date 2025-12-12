@@ -1,5 +1,5 @@
-#ifndef LANGUAGE_H_
-#define LANGUAGE_H_
+#ifndef FRONT_END_H_
+#define FRONT_END_H_
 
 #include "../common.h"
 
@@ -32,4 +32,4 @@ void ArrayDtorVariables(Language* language, Array_with_data* array_with_data);
 
 
 
-#endif // LANGUAGE_H_
+#endif // FRONT_END_H_

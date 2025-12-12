@@ -6,7 +6,7 @@
 #include "onegin.h"
 
 #include "../common.h"
-#include "language.h"
+#include "middle_end.h"
 
 
 int SizeOfText(const char *text_name) {

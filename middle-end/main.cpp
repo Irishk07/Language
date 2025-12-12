@@ -2,7 +2,7 @@
 
 #include "array.h"
 #include "../common.h"
-#include "language.h"
+#include "middle_end.h"
 #include "tree.h"
 
 

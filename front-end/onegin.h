@@ -2,7 +2,7 @@
 #define ONEGIN_H_
 
 #include "../common.h"
-#include "language.h"
+#include "front_end.h"
 
 
 int SizeOfText(const char *text_name);

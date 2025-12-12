@@ -2,7 +2,7 @@
 
 #include "array.h"
 #include "../common.h"
-#include "language.h"
+#include "front_end.h"
 #include "tokenizator.h"
 #include "tree.h"
 #include "syntax_analize.h"

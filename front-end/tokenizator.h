@@ -2,7 +2,7 @@
 #define TOKENIZATOR_H_
 
 #include "../common.h"
-#include "language.h"
+#include "front_end.h"
 
 
 Tree_status Tokenizator(Language* language);

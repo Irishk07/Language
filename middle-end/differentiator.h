@@ -8,7 +8,7 @@
 #define DIV /
 
 #include "../common.h"
-#include "language.h"
+#include "middle_end.h"
 
 
 const double EPS = 1e-10;

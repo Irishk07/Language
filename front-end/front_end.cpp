@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "language.h"
+#include "front_end.h"
 
 #include "array.h"
 #include "../common.h"
