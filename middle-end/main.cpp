@@ -6,10 +6,6 @@
 #include "tree.h"
 
 
-// функции, вызов и определение, возврат значения, где хранить названия функции
-// дробление на файлы? как лучше
-// как прокидывать название файла с деревом
-
 int main(int argc, char** argv) {
     const char* html_dump_filename = "dump.html";
     const char* directory          = "dump";

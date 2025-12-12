@@ -13,9 +13,9 @@
             }                                                             \
         }
 
-#define DUMP_CURRENT_SITUATION(node)                                                        \
-{                                                                                           \
-        TreeHTMLDump(language, node, DUMP_INFO, NOT_ERROR_DUMP);                            \
+#define DUMP_CURRENT_SITUATION(node)                              \
+{                                                                 \
+        TreeHTMLDump(language, node, DUMP_INFO, NOT_ERROR_DUMP);  \
 }
 
 #define DUMP_INFO __LINE__, __FILE__
@@ -168,16 +168,6 @@ struct Array_with_data {
     size_t capacity = 0;
     size_t elem_size;
 };
-
-// struct Language {
-//     Tree tree;
-//     Array_with_data array_with_variables;
-//     Array_with_data array_with_tokens;
-//     char* end_buffer;
-//     size_t size_buffer;
-//     char* begin_buffer;
-//     Dump_information dump_info;
-// };
 
 
 #endif // COMMON_H_
