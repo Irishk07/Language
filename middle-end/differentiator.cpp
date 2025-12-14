@@ -261,6 +261,7 @@ double Calculating(Language* language, Tree_node* tree_node) {
                 case OPERATOR_CTH: 
                     CALCULATING_CTH;
                 case OPERATOR_EQUAL:
+                case OPERATOR_CHANGE:
                 case OPERATOR_COMMON:
                 case OPERATOR_IF:
                 case OPERATOR_WHILE:

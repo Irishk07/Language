@@ -23,18 +23,6 @@ Tree_status CreatePreOrderTreeFile(Language* language);
 
 void PrintPreOrderTreeToFile(Language* language, Tree_node* tree_node, FILE* stream);
 
-Tree_status ReadPreOrderTreeFile(Language* language);
-
-Tree_status ReadPreOrderNode(Language* language, Tree_node** tree_node, char** current_pos);
-
-Type_node FindOutType(Language* language, const char* name, type_t* value);
-
-Status_of_finding ItIsOperator(const char* name, type_t* value);
-
-Status_of_finding ItIsNumber(const char* name, type_t* value);
-
-Status_of_finding ItIsVariable(Language* language, const char* name, type_t* value);
-
 Tree_status LanguageDtor(Language* language);
 
 void LanguageNodeDtor(Language* language, Tree_node* tree_node);

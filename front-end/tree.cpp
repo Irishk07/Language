@@ -61,14 +61,14 @@ size_t IndexOfVariable(Tree_node* tree_node) {
     return (size_t)tree_node->value.index_variable;
 }
 
-double ValueOfVariable(Language* language, Tree_node* tree_node) {
+int ValueOfVariable(Language* language, Tree_node* tree_node) {
     assert(language);
     assert(tree_node);
 
     return ValueOfVariableFromIndex(language, IndexOfVariable(tree_node));
 }
 
-double ValueOfVariableFromIndex(Language* language, size_t index) {
+int ValueOfVariableFromIndex(Language* language, size_t index) {
     assert(language);
 
     About_variable about_variable = {};
@@ -119,6 +119,7 @@ const char* IndetifySign(Tree_node* tree_node) {
                 case OPERATOR_TH:     return "th";
                 case OPERATOR_CTH:    return "cth";
                 case OPERATOR_EQUAL:  return "=";
+                case OPERATOR_CHANGE: return ":=";
                 case OPERATOR_COMMON: return ";";
                 case OPERATOR_IF:     return "if";
                 case OPERATOR_WHILE:  return "while";
@@ -302,7 +303,7 @@ void PrintNodeToDot(Language* language, FILE *file, Tree_node* tree_node) {
     }    
 
     else if (tree_node->type == VARIABLE) {
-        fprintf(file, "    node_%p [label=\"{'%s' (%lg)}\", fillcolor = \"#99c0ffff\"];\n", 
+        fprintf(file, "    node_%p [label=\"{'%s' (%d)}\", fillcolor = \"#99c0ffff\"];\n", 
                       (void *)tree_node, NameOfVariable(language, tree_node), ValueOfVariable(language, tree_node));
     }
 

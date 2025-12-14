@@ -114,11 +114,8 @@ Tree_node* CheckKeyWords(char* name_variable, unsigned long hash_variable) {
     assert(name_variable);
 
     for (size_t i = 0; i < sizeof(key_words) / sizeof(key_words[0]); ++i) {
-        if (hash_variable == key_words[i].hash){
-            if (strcmp(name_variable, key_words[i].name) == 0) {
-                return NODE_OPERATOR_CTOR(key_words[i].type);
-            }    
-        }    
+        if (hash_variable == key_words[i].hash && strcmp(name_variable, key_words[i].name) == 0)
+            return NODE_OPERATOR_CTOR(key_words[i].type);  
     }
 
     return NULL;
@@ -130,7 +127,7 @@ Tree_node* ReadSigns(Language* language, char** str) {
     
     for (size_t i = 0; i < sizeof(key_words) / sizeof(key_words[0]); ++i) {
         if (strncmp(*str, key_words[i].name, strlen(key_words[i].name)) == 0){
-            (*str)++;
+            (*str) += strlen(key_words[i].name);
 
             return NODE_OPERATOR_CTOR(key_words[i].type);
         }    

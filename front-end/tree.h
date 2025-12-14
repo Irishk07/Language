@@ -31,9 +31,9 @@ char* ReadAnswer();
 
 size_t IndexOfVariable(Tree_node* tree_node);
 
-double ValueOfVariable(Language* language, Tree_node* tree_node);
+int ValueOfVariable(Language* language, Tree_node* tree_node);
 
-double ValueOfVariableFromIndex(Language* language, size_t index);
+int ValueOfVariableFromIndex(Language* language, size_t index);
 
 char* NameOfVariable(Language* language, Tree_node* tree_node);
 

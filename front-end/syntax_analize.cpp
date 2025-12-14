@@ -183,9 +183,10 @@ Tree_node* LangGetAssignment(Language* language, size_t* number_token, Tree_stat
     DUMP_CURRENT_SITUATION(variable_node);
 
     Tree_node* cur_token = NULL;
-    ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token); // wait =
+    ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token); // wait = or :=
 
-    if (cur_token->type == OPERATOR && cur_token->value.operators == OPERATOR_EQUAL) {
+    if (cur_token->type == OPERATOR && 
+        (cur_token->value.operators == OPERATOR_EQUAL || cur_token->value.operators == OPERATOR_CHANGE)) {
         (*number_token)++;
 
         Tree_node* expression_node = LangGetExpression(language, number_token, status);
