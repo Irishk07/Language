@@ -56,6 +56,11 @@ Tree_status BackEnd(Language* language, const char* name_asm_file) {
 
     CreateAsmFile(language, language->tree.root, asm_file);
 
+    fprintf(asm_file, "HLT\n");
+
+    if (fclose(asm_file) == EOF)
+        TREE_CHECK_AND_RETURN_ERRORS(CLOSE_ERROR);
+
     return SUCCESS;
 }
 
@@ -100,6 +105,8 @@ void CreateAsmFile(Language* language, Tree_node* tree_node, FILE* asm_file) {
             case OPERATOR_WHILE:  PrintWhile(language, tree_node, asm_file);                  break;
             case OPERATOR_COMMON: CreateAsmFile(language, tree_node->left_node, asm_file);
                                   CreateAsmFile(language, tree_node->right_node, asm_file);   break;
+            case OPERATOR_INPUT:  fprintf(asm_file, "IN\n");                                  break;
+            case OPERATOR_PRINT:  PrintOut(language, tree_node, asm_file);                    break;
             case OPERATOR_OPEN_BRACKET:  
             case OPERATOR_CLOSE_BRACKET: 
             case OPERATOR_OPEN_FIGURE:   
@@ -147,6 +154,7 @@ void PrintIf(Language* language, Tree_node* tree_node, FILE* asm_file) {
     assert(tree_node);
 
     CreateAsmFile(language, tree_node->left_node, asm_file);
+    fprintf(asm_file, "PUSH 0\n");
     
     if (tree_node->right_node->type != OPERATOR || tree_node->right_node->value.operators != OPERATOR_ELSE) {
         fprintf(asm_file, "JE :end_if_%zu\n", language->cnt_labels.cnt_if);
@@ -192,6 +200,16 @@ void PrintWhile(Language* language, Tree_node* tree_node, FILE* asm_file) {
     fprintf(asm_file, ":end_while_%zu\n", language->cnt_labels.cnt_while);
 
     language->cnt_labels.cnt_while++;
+}
+
+void PrintOut(Language* language, Tree_node* tree_node, FILE* asm_file) {
+    assert(language);
+    assert(tree_node);
+    assert(asm_file);
+
+    CreateAsmFile(language, tree_node->left_node, asm_file);
+
+    fprintf(asm_file, "OUT\n");
 }
 
 Tree_status LanguageDtor(Language* language) {

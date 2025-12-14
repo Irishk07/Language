@@ -371,7 +371,6 @@ status_cmp CheckRegister(char* string, int type_argument, type_t* code) {
 
     About_register* res = (About_register*)bsearch(&current_hash, about_register, sizeof(about_register) / sizeof(about_register[0]), 
                                                      sizeof(About_register), &bsearch_register_comparator);
-    fprintf(stderr, "%s: string %s\n", __func__, string);
 
     if (res == NULL && type_argument == RAM_NUM_ARGUMENT && string[0] == '[') {
         type_t number = 0;

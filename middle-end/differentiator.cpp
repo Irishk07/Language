@@ -109,7 +109,7 @@ void OptimizationOneNode(Language* language, Tree_node** tree_node, Tree_node* f
 bool IsConstantNode(Language* language, Tree_node* node) {
     assert(language);
 
-    if (node == NULL) return true;
+    if (node == NULL) return false;
     
     switch (node->type) {
         case NUMBER:
@@ -266,6 +266,8 @@ double Calculating(Language* language, Tree_node* tree_node) {
                 case OPERATOR_IF:
                 case OPERATOR_WHILE:
                 case OPERATOR_ELSE:
+                case OPERATOR_INPUT:
+                case OPERATOR_PRINT:
                 case OPERATOR_OPEN_BRACKET:
                 case OPERATOR_CLOSE_BRACKET:
                 case OPERATOR_OPEN_FIGURE:

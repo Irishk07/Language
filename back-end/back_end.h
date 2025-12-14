@@ -42,6 +42,8 @@ void PrintElse(Language* language, Tree_node* tree_node, FILE* asm_file);
 
 void PrintWhile(Language* language, Tree_node* tree_node, FILE* asm_file);
 
+void PrintOut(Language* language, Tree_node* tree_node, FILE* asm_file);
+
 Tree_status LanguageDtor(Language* language);
 
 void LanguageNodeDtor(Language* language, Tree_node* tree_node);

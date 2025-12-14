@@ -15,17 +15,19 @@
 
 // +++++++++++++++++|||||+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Comandir          ::= Operators+ '$'
-// Operators         ::= { Assignment | IF | '{'Operators+'}' } ';'                                                       // | print
+// Operators         ::= { Assignment | WhileOrIf | '{'Operators+'}' | Print} ';'                                              
 // WhileOrIf         ::= ["if", "while"]'('Expression')'Operators Else?
 // Else              ::= "else" Operators
+// Print             ::= "print" '('Expression')'
 // Assignment        ::= Variable'='Expression
 // Expression        ::= Term{[+ -]Term}*
 // Term              ::= Pow{[* /]Pow}*
 // Pow               ::= PrimaryExpression{[^]PrimaryExpression}*
-// PrimaryExpression ::= '('Expression')' | Number | Variable | MathFunction                                              // | scanf
+// PrimaryExpression ::= '('Expression')' | Number | Variable | MathFunction | Input                                    
 // Number            ::= [0-9]+
 // Variable          ::= [a-zA-Z_][a-zA-z0-9_]*
 // MathFunction      ::= [ln, sin, cos, tg, ctg, arcsin, arccos, arctg, arcctg, sh, ch, th, cth]'('Expression')'
+// Input             ::= [input]
 // +++++++++++++++++|||||+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
@@ -71,7 +73,12 @@ Tree_node* LangGetOperators(Language* language, size_t* number_token, Tree_statu
     assert(language);
     assert(status);
 
-    Tree_node* operator_node = LangGetWhileOrIf(language, number_token, status);
+    Tree_node* operator_node = LangGetPrint(language, number_token, status);
+    if (operator_node != NULL)
+        return operator_node;
+    DUMP_CURRENT_SITUATION(operator_node);
+
+    operator_node = LangGetWhileOrIf(language, number_token, status);
     if (operator_node != NULL)
         return operator_node;
     DUMP_CURRENT_SITUATION(operator_node);
@@ -345,6 +352,10 @@ Tree_node* LangGetPrimaryExpression(Language* language, size_t* number_token, Tr
         element_node = LangGetMathFunction(language, number_token, status);
         if (element_node != NULL)
             return element_node;
+
+        element_node = LangGetInput(language, number_token, status);
+        if (element_node != NULL)
+            return element_node;
     }
 
     DUMP_CURRENT_SITUATION(element_node);
@@ -390,12 +401,83 @@ Tree_node* LangGetMathFunction(Language* language, size_t* number_token, Tree_st
     ArrayGetElement(&(language->array_with_tokens), &math_func_node, *number_token);
 
     if (math_func_node->type == OPERATOR) {
-
         for (size_t i = 0; i < sizeof(key_words) / sizeof(key_words[0]); ++i) {
             if (math_func_node->value.operators == key_words[i].type && 
-                (key_words[i].type != OPERATOR_IF && key_words[i].type != OPERATOR_WHILE)) {
+                (key_words[i].type != OPERATOR_IF && key_words[i].type != OPERATOR_WHILE 
+                && key_words[i].type != OPERATOR_INPUT && key_words[i].type != OPERATOR_PRINT)) {
                     (*number_token)++;
                     return math_func_node;
+            }
+        }
+    }
+
+    return NULL;
+}
+
+Tree_node* LangGetInput(Language* language, size_t* number_token, Tree_status* status) {
+    assert(language);
+    assert(status);
+
+    Tree_node* scanf_node = NULL;
+    ArrayGetElement(&(language->array_with_tokens), &scanf_node, *number_token);
+
+    if (scanf_node->type == OPERATOR && scanf_node->value.operators == OPERATOR_INPUT) { // wait input
+        (*number_token)++;
+
+        Tree_node* argument_node = NULL;
+        ArrayGetElement(&(language->array_with_tokens), &argument_node, *number_token);
+
+        if (argument_node->type == OPERATOR && argument_node->value.operators == OPERATOR_OPEN_BRACKET) { // wait (
+            (*number_token)++;
+            free(argument_node);
+            ArrayGetElement(&(language->array_with_tokens), &argument_node, *number_token);
+       
+            if (argument_node->type == OPERATOR && argument_node->value.operators == OPERATOR_CLOSE_BRACKET) { // wait )
+                (*number_token)++;
+                free(argument_node);
+
+                return scanf_node;
+            }
+        }
+    }
+
+    return NULL;
+}
+
+Tree_node* LangGetPrint(Language* language, size_t* number_token, Tree_status* status) {
+    assert(language);
+    assert(status);
+
+    Tree_node* print_node = NULL;
+    ArrayGetElement(&(language->array_with_tokens), &print_node, *number_token);
+
+    if (print_node->type == OPERATOR && print_node->value.operators == OPERATOR_PRINT) { // wait print
+        (*number_token)++;
+        
+        Tree_node* argument_node = NULL;
+        ArrayGetElement(&(language->array_with_tokens), &argument_node, *number_token);
+
+        if (argument_node->type == OPERATOR && argument_node->value.operators == OPERATOR_OPEN_BRACKET) { // wait (
+            (*number_token)++;
+            free(argument_node);
+            
+            Tree_node* expression_node = LangGetExpression(language, number_token, status);
+
+            print_node->left_node = expression_node;
+
+            ArrayGetElement(&(language->array_with_tokens), &argument_node, *number_token);
+
+            if (argument_node->type == OPERATOR && argument_node->value.operators == OPERATOR_CLOSE_BRACKET) { // wait )
+                (*number_token)++;
+                free(argument_node);
+
+                ArrayGetElement(&(language->array_with_tokens), &argument_node, *number_token);
+                if ((argument_node->type == OPERATOR && argument_node->value.operators == OPERATOR_COMMON) == 0)
+                    return NULL;
+
+                (*number_token)++;
+                argument_node->left_node = print_node;
+                return argument_node;
             }
         }
     }

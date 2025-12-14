@@ -5,7 +5,7 @@
 int main(int argc, char** argv) {
     Assembler assembler = {};
 
-    const char* name_command_file = "commands_func_new.txt";
+    const char* name_command_file = "asm.txt";
     if (argc >= 2)
         name_command_file = argv[1];
 

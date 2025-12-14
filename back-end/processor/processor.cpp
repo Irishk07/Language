@@ -68,22 +68,19 @@ processor_status SPU(Processor* processor) {
     type_t command = 0;
 
     while (processor->programm_cnt != processor->cnt_commands) {
-        if (sscanf(processor->about_text.pointer_on_text[processor->programm_cnt], TYPE_T_PRINTF_SPECIFIER, &command) != 1) {
+        if (sscanf(processor->about_text.pointer_on_text[processor->programm_cnt], TYPE_T_PRINTF_SPECIFIER, &command) != 1)
             CHECK_AND_RETURN_ERRORS_PROC(PROC_WRONG_BYTE_CODE);
-        }
 
-        if (command == CMD_HLT) {
+        if (command == CMD_HLT)
             break;
-        }
 
         processor->proc_about_commands[command].function(processor);
 
         processor->programm_cnt++;
     }
 
-    if (processor->programm_cnt == processor->cnt_commands) {
+    if (processor->programm_cnt == processor->cnt_commands)
         CHECK_AND_RETURN_ERRORS_PROC(PROC_EXPECTS_HLT);
-    }
 
     CHECK_AND_RETURN_ERRORS_PROC(ProcVerify(processor));
 
@@ -135,9 +132,8 @@ processor_status do_push(Processor* processor) {
     type_t num = 0;
     processor->programm_cnt++;
 
-    if (sscanf(processor->about_text.pointer_on_text[processor->programm_cnt], TYPE_T_PRINTF_SPECIFIER, &num) != 1) {
+    if (sscanf(processor->about_text.pointer_on_text[processor->programm_cnt], TYPE_T_PRINTF_SPECIFIER, &num) != 1)
         return PROC_EXPECTS_ARG;
-    }
 
     CHECK_AND_RETURN_ERRORS_STACK(StackPush(&processor->stack, num));
 
@@ -249,9 +245,8 @@ processor_status do_in(Processor* processor) {
 
     printf("Enter tne number please:\n");
 
-    if (scanf(TYPE_T_PRINTF_SPECIFIER, &num) != 1) {
+    if (scanf(TYPE_T_PRINTF_SPECIFIER, &num) != 1)
         return PROC_EXPECTS_ARG;
-    }
 
     CHECK_AND_RETURN_ERRORS_STACK(StackPush(&processor->stack, num));
 
@@ -268,13 +263,11 @@ processor_status do_popr(Processor* processor) {
     CHECK_AND_RETURN_ERRORS_STACK(StackPop(&processor->stack, &num));
     processor->programm_cnt++;
 
-    if (sscanf(processor->about_text.pointer_on_text[processor->programm_cnt], TYPE_T_PRINTF_SPECIFIER, &code_reg) != 1) {
+    if (sscanf(processor->about_text.pointer_on_text[processor->programm_cnt], TYPE_T_PRINTF_SPECIFIER, &code_reg) != 1)
         return PROC_EXPECTS_ARG;
-    }
 
-    if (code_reg < 0 || code_reg >= CNT_REGISTERS) {
+    if (code_reg < 0 || code_reg >= CNT_REGISTERS)
         CHECK_AND_RETURN_ERRORS_PROC(PROC_INVALID_REGISTER);
-    }
 
     processor->registers[code_reg] = num;
 
@@ -288,13 +281,11 @@ processor_status do_pushr(Processor* processor) {
     type_t code_reg  = 0;
     processor->programm_cnt++;
 
-    if (sscanf(processor->about_text.pointer_on_text[processor->programm_cnt], TYPE_T_PRINTF_SPECIFIER, &code_reg) != 1) {
+    if (sscanf(processor->about_text.pointer_on_text[processor->programm_cnt], TYPE_T_PRINTF_SPECIFIER, &code_reg) != 1)
         return PROC_EXPECTS_ARG;
-    }
 
-    if (code_reg < 0 || code_reg >= CNT_REGISTERS) {
+    if (code_reg < 0 || code_reg >= CNT_REGISTERS)
         CHECK_AND_RETURN_ERRORS_PROC(PROC_INVALID_REGISTER);
-    }
 
     CHECK_AND_RETURN_ERRORS_STACK(StackPush(&processor->stack, processor->registers[code_reg]));
 
@@ -319,9 +310,8 @@ processor_status do_jmp(Processor* processor) {
     type_t num = 0;
     processor->programm_cnt++;
 
-    if (sscanf(processor->about_text.pointer_on_text[processor->programm_cnt], TYPE_T_PRINTF_SPECIFIER, &num) != 1) {
+    if (sscanf(processor->about_text.pointer_on_text[processor->programm_cnt], TYPE_T_PRINTF_SPECIFIER, &num) != 1)
         return PROC_EXPECTS_ARG;
-    }
 
     processor->programm_cnt = (size_t)(num - 1);
 
@@ -385,9 +375,8 @@ processor_status do_pushmr(Processor* processor) {
     processor->programm_cnt++;
 
     type_t reg = 0;
-    if (sscanf(processor->about_text.pointer_on_text[processor->programm_cnt], TYPE_T_PRINTF_SPECIFIER, &reg) != 1) {
+    if (sscanf(processor->about_text.pointer_on_text[processor->programm_cnt], TYPE_T_PRINTF_SPECIFIER, &reg) != 1)
         return PROC_EXPECTS_ARG;
-    }
 
     CHECK_AND_RETURN_ERRORS_STACK(StackPush(&processor->stack, processor->ram[processor->registers[reg]]));
 
@@ -403,13 +392,12 @@ processor_status do_popmr(Processor* processor) {
     processor->programm_cnt++;
 
     type_t reg = 0;
-    if (sscanf(processor->about_text.pointer_on_text[processor->programm_cnt], TYPE_T_PRINTF_SPECIFIER, &reg) != 1) {
+    if (sscanf(processor->about_text.pointer_on_text[processor->programm_cnt], TYPE_T_PRINTF_SPECIFIER, &reg) != 1)
         return PROC_EXPECTS_ARG;
-    }
 
     processor->ram[processor->registers[reg]] = (int)num;
 
-    draw_ram(processor);
+    // draw_ram(processor);
 
     return PROC_SUCCESS;
 }
@@ -420,9 +408,8 @@ processor_status do_pushmn(Processor* processor) {
     processor->programm_cnt++;
 
     type_t reg = 0;
-    if (sscanf(processor->about_text.pointer_on_text[processor->programm_cnt], TYPE_T_PRINTF_SPECIFIER, &reg) != 1) {
+    if (sscanf(processor->about_text.pointer_on_text[processor->programm_cnt], TYPE_T_PRINTF_SPECIFIER, &reg) != 1)
         return PROC_EXPECTS_ARG;
-    }
 
     CHECK_AND_RETURN_ERRORS_STACK(StackPush(&processor->stack, processor->ram[reg]));
 
@@ -438,13 +425,12 @@ processor_status do_popmn(Processor* processor) {
     processor->programm_cnt++;
 
     type_t reg = 0;
-    if (sscanf(processor->about_text.pointer_on_text[processor->programm_cnt], TYPE_T_PRINTF_SPECIFIER, &reg) != 1) {
+    if (sscanf(processor->about_text.pointer_on_text[processor->programm_cnt], TYPE_T_PRINTF_SPECIFIER, &reg) != 1)
         return PROC_EXPECTS_ARG;
-    }
 
     processor->ram[reg] = (int)num;
 
-    draw_ram(processor);
+    // draw_ram(processor);
 
     return PROC_SUCCESS;
 }

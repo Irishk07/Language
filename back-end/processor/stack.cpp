@@ -167,9 +167,8 @@ type_error_t StackPop(stack_t* stack, type_t* deleted_value) {
 
     STACK_CHECK_ERRORS(VERIFY(stack));
 
-    if (stack->size == 0) {
+    if (stack->size == 0)
         STACK_CHECK_ERRORS(POP_EMPTY_STACK);
-    }
 
     if (deleted_value) {
         StackPeek(stack, deleted_value);

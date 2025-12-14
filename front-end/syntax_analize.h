@@ -29,4 +29,9 @@ Tree_node* LangGetVariable(Language* language, size_t* number_token, Tree_status
 
 Tree_node* LangGetMathFunction(Language* language, size_t* number_token, Tree_status* status);
 
+Tree_node* LangGetInput(Language* language, size_t* number_token, Tree_status* status);
+
+Tree_node* LangGetPrint(Language* language, size_t* number_token, Tree_status* status);
+
+
 #endif // SYNTAX_ANALIZE_H_

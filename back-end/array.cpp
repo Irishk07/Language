@@ -21,7 +21,7 @@ Tree_status ArrayCtor(Array_with_data* array_with_data, size_t sizeof_elements, 
 }
 
 Tree_status ArrayResize(Array_with_data* array_with_data, size_t old_capacity) {
-    void* temp_data = my_recalloc(array_with_data->data, array_with_data->size * array_with_data->elem_size, old_capacity * array_with_data->elem_size);
+    void* temp_data = my_recalloc(array_with_data->data, array_with_data->capacity * array_with_data->elem_size, old_capacity * array_with_data->elem_size);
 
     if (temp_data == NULL)
         TREE_CHECK_AND_RETURN_ERRORS(MEMORY_ERROR);
