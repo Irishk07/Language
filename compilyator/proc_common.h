@@ -49,8 +49,22 @@ enum code_comand {
     CMD_POPMR  = 22,
     CMD_PUSHMN = 23,
     CMD_POPMN  = 24,
-    CMD_PUSHR  = 33,
-    CMD_POPR   = 42
+    CMD_PUSHR  = 25,
+    CMD_POPR   = 26,
+    CMD_LN     = 27,
+    CMD_LOG    = 28,
+    CMD_SIN    = 29,
+    CMD_COS    = 30,
+    CMD_TG     = 31,
+    CMD_CTG    = 32,
+    CMD_ARCSIN = 33,
+    CMD_ARCCOS = 34,
+    CMD_ARCTG  = 35,
+    CMD_ARCCTG = 36,
+    CMD_SH     = 37,
+    CMD_CH     = 38,  
+    CMD_TH     = 39,
+    CMD_CTH    = 40
 };
 
 enum type_arguments {
@@ -80,7 +94,13 @@ enum processor_status {
     PROC_WRONG_BYTE_CODE          = 1 << 13,
     PROC_INVALID_REGISTER         = 1 << 14,
     PROC_EXPECTS_ARG              = 1 << 15,
-    PROC_EXPECTS_HLT              = 1 << 16
+    PROC_EXPECTS_HLT              = 1 << 16,
+    PROC_LN_NEGATIVE_NUM          = 1 << 17,
+    PROC_LOG_NEGATIVE_NUM         = 1 << 18,
+    PROC_CTG_NEGATIVE_NUM         = 1 << 19,
+    PROC_ARCSIN_NEGATIVE_NUM      = 1 << 20,
+    PROC_ARCCOS_NEGATIVE_NUM      = 1 << 21,
+    PROC_CTH_NEGATIVE_NUM         = 1 << 22
 };
 
 
@@ -155,38 +175,81 @@ processor_status do_popmr(Processor* processor);
 processor_status do_pushmn(Processor* processor);
 
 processor_status do_popmn(Processor* processor);
+
+processor_status do_ln(Processor* processor);
+
+processor_status do_log(Processor* processor);
+
+processor_status do_sin(Processor* processor);
+
+processor_status do_cos(Processor* processor);
+
+processor_status do_tg(Processor* processor);
+
+processor_status do_ctg(Processor* processor);
+
+processor_status do_arcsin(Processor* processor);
+
+processor_status do_arccos(Processor* processor);
+
+processor_status do_arctg(Processor* processor);
+
+processor_status do_arcctg(Processor* processor);
+
+processor_status do_sh(Processor* processor);
+
+processor_status do_ch(Processor* processor);
+
+processor_status do_th(Processor* processor);
+
+processor_status do_cth(Processor* processor);
 )
 
 
 const About_commands about_commands [] = {
-    {.name = "PUSH", .code = CMD_PUSH,  .type_argument = NUM_ARGUMENT,     .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"PUSH"))  IF_PROCESSOR(, .function = &do_push)},
-    {.name = "POP",  .code = CMD_POP,   .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"POP"))   IF_PROCESSOR(, .function = &do_pop)},
-    {.name = "ADD",  .code = CMD_ADD,   .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"ADD"))   IF_PROCESSOR(, .function = &do_add)},
-    {.name = "SUB",  .code = CMD_SUB,   .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"SUB"))   IF_PROCESSOR(, .function = &do_sub)},
-    {.name = "DIV",  .code = CMD_DIV,   .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"DIV"))   IF_PROCESSOR(, .function = &do_div)},
-    {.name = "MUL",  .code = CMD_MUL,   .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"MUL"))   IF_PROCESSOR(, .function = &do_mul)},
-    {.name = "SQRT", .code = CMD_SQRT,  .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"SQRT"))  IF_PROCESSOR(, .function = &do_sqrt)},
-    {.name = "POW",  .code = CMD_POW,   .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"POW"))   IF_PROCESSOR(, .function = &do_pow)},
-    {.name = "IN",   .code = CMD_IN,    .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"IN"))    IF_PROCESSOR(, .function = &do_in)},
-    {.name = "OUT",  .code = CMD_OUT,   .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"OUT"))   IF_PROCESSOR(, .function = &do_out)},
-    {.name = "HLT",  .code = CMD_HLT,   .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"HLT"))   IF_PROCESSOR(, .function = NULL)},
-    {.name = "JMP",  .code = CMD_JMP,   .type_argument = LABEL_ARGUMENT,   .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"JMP"))   IF_PROCESSOR(, .function = &do_jmp)},
-    {.name = "JB",   .code = CMD_JB,    .type_argument = LABEL_ARGUMENT,   .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"JB"))    IF_PROCESSOR(, .function = &do_jb)},
-    {.name = "JBE",  .code = CMD_JBE,   .type_argument = LABEL_ARGUMENT,   .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"JBE"))   IF_PROCESSOR(, .function = &do_jbe)},
-    {.name = "JA",   .code = CMD_JA,    .type_argument = LABEL_ARGUMENT,   .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"JA"))    IF_PROCESSOR(, .function = &do_ja)},
-    {.name = "JAE",  .code = CMD_JAE,   .type_argument = LABEL_ARGUMENT,   .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"JAE"))   IF_PROCESSOR(, .function = &do_jae)},
-    {.name = "JE",   .code = CMD_JE,    .type_argument = LABEL_ARGUMENT,   .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"JE"))    IF_PROCESSOR(, .function = &do_je)},
-    {.name = "JNE",  .code = CMD_JNE,   .type_argument = LABEL_ARGUMENT,   .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"JNE"))   IF_PROCESSOR(, .function = &do_jne)},
-    {.name = "CALL", .code = CMD_CALL,  .type_argument = LABEL_ARGUMENT,   .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"CALL"))  IF_PROCESSOR(, .function = &do_call)},
-    {.name = "RET",  .code = CMD_RET,   .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"RET"))   IF_PROCESSOR(, .function = &do_ret)},
-    {.name = "PUSHR",.code = CMD_PUSHR, .type_argument = REG_ARGUMENT,     .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"PUSHR")) IF_PROCESSOR(, .function = &do_pushr)},
-    {.name = "POPR", .code = CMD_POPR,  .type_argument = REG_ARGUMENT,     .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"POPR"))  IF_PROCESSOR(, .function = &do_popr)},
+    {.name = "PUSH",  .code = CMD_PUSH,   .type_argument = NUM_ARGUMENT,     .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"PUSH"))   IF_PROCESSOR(, .function = &do_push)},
+    {.name = "POP",   .code = CMD_POP,    .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"POP"))    IF_PROCESSOR(, .function = &do_pop)},
+    {.name = "ADD",   .code = CMD_ADD,    .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"ADD"))    IF_PROCESSOR(, .function = &do_add)},
+    {.name = "SUB",   .code = CMD_SUB,    .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"SUB"))    IF_PROCESSOR(, .function = &do_sub)},
+    {.name = "DIV",   .code = CMD_DIV,    .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"DIV"))    IF_PROCESSOR(, .function = &do_div)},
+    {.name = "MUL",   .code = CMD_MUL,    .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"MUL"))    IF_PROCESSOR(, .function = &do_mul)},
+    {.name = "SQRT",  .code = CMD_SQRT,   .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"SQRT"))   IF_PROCESSOR(, .function = &do_sqrt)},
+    {.name = "POW",   .code = CMD_POW,    .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"POW"))    IF_PROCESSOR(, .function = &do_pow)},
+    {.name = "IN",    .code = CMD_IN,     .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"IN"))     IF_PROCESSOR(, .function = &do_in)},
+    {.name = "OUT",   .code = CMD_OUT,    .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"OUT"))    IF_PROCESSOR(, .function = &do_out)},
+    {.name = "HLT",   .code = CMD_HLT,    .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"HLT"))    IF_PROCESSOR(, .function = NULL)},
+    {.name = "JMP",   .code = CMD_JMP,    .type_argument = LABEL_ARGUMENT,   .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"JMP"))    IF_PROCESSOR(, .function = &do_jmp)},
+    {.name = "JB",    .code = CMD_JB,     .type_argument = LABEL_ARGUMENT,   .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"JB"))     IF_PROCESSOR(, .function = &do_jb)},
+    {.name = "JBE",   .code = CMD_JBE,    .type_argument = LABEL_ARGUMENT,   .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"JBE"))    IF_PROCESSOR(, .function = &do_jbe)},
+    {.name = "JA",    .code = CMD_JA,     .type_argument = LABEL_ARGUMENT,   .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"JA"))     IF_PROCESSOR(, .function = &do_ja)},
+    {.name = "JAE",   .code = CMD_JAE,    .type_argument = LABEL_ARGUMENT,   .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"JAE"))    IF_PROCESSOR(, .function = &do_jae)},
+    {.name = "JE",    .code = CMD_JE,     .type_argument = LABEL_ARGUMENT,   .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"JE"))     IF_PROCESSOR(, .function = &do_je)},
+    {.name = "JNE",   .code = CMD_JNE,    .type_argument = LABEL_ARGUMENT,   .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"JNE"))    IF_PROCESSOR(, .function = &do_jne)},
+    {.name = "CALL",  .code = CMD_CALL,   .type_argument = LABEL_ARGUMENT,   .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"CALL"))   IF_PROCESSOR(, .function = &do_call)},
+    {.name = "RET",   .code = CMD_RET,    .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"RET"))    IF_PROCESSOR(, .function = &do_ret)},
+    {.name = "PUSHR", .code = CMD_PUSHR,  .type_argument = REG_ARGUMENT,     .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"PUSHR"))  IF_PROCESSOR(, .function = &do_pushr)},
+    {.name = "POPR",  .code = CMD_POPR,   .type_argument = REG_ARGUMENT,     .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"POPR"))   IF_PROCESSOR(, .function = &do_popr)},
     {.name = "PUSHMR",.code = CMD_PUSHMR, .type_argument = RAM_REG_ARGUMENT, .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"PUSHMR")) IF_PROCESSOR(, .function = &do_pushmr)},
     {.name = "POPMR", .code = CMD_POPMR,  .type_argument = RAM_REG_ARGUMENT, .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"POPMR"))  IF_PROCESSOR(, .function = &do_popmr)},
     {.name = "PUSHMR",.code = CMD_PUSHMN, .type_argument = RAM_NUM_ARGUMENT, .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"PUSHMN")) IF_PROCESSOR(, .function = &do_pushmn)},
-    {.name = "POPMR", .code = CMD_POPMN,  .type_argument = RAM_NUM_ARGUMENT, .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"POPMN"))  IF_PROCESSOR(, .function = &do_popmn)}
+    {.name = "POPMR", .code = CMD_POPMN,  .type_argument = RAM_NUM_ARGUMENT, .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"POPMN"))  IF_PROCESSOR(, .function = &do_popmn)},
+    {.name = "LN",    .code = CMD_LN,     .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"LN"))     IF_PROCESSOR(, .function = &do_ln)},
+    {.name = "LOG",   .code = CMD_LOG,    .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"LOG"))    IF_PROCESSOR(, .function = &do_log)},
+    {.name = "SIN",   .code = CMD_SIN,    .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"SIN"))    IF_PROCESSOR(, .function = &do_sin)},
+    {.name = "COS",   .code = CMD_COS,    .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"COS"))    IF_PROCESSOR(, .function = &do_cos)},
+    {.name = "TG",    .code = CMD_TG,     .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"TG"))     IF_PROCESSOR(, .function = &do_tg)},
+    {.name = "CTG",   .code = CMD_CTG,    .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"CTG"))    IF_PROCESSOR(, .function = &do_ctg)},
+    {.name = "ARCSIN",.code = CMD_ARCSIN, .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"ARCSIN")) IF_PROCESSOR(, .function = &do_arcsin)},
+    {.name = "ARCCOS",.code = CMD_ARCCOS, .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"ARCCOS")) IF_PROCESSOR(, .function = &do_arccos)},
+    {.name = "ARCTG", .code = CMD_ARCTG,  .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"ARCTG"))  IF_PROCESSOR(, .function = &do_arctg)},
+    {.name = "ARCCTG",.code = CMD_ARCCTG, .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"ARCCTG")) IF_PROCESSOR(, .function = &do_arcctg)},
+    {.name = "SH",    .code = CMD_SH,     .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"SH"))     IF_PROCESSOR(, .function = &do_sh)},
+    {.name = "CH",    .code = CMD_CH,     .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"CH"))     IF_PROCESSOR(, .function = &do_ch)},
+    {.name = "TH",    .code = CMD_TH,     .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"TH"))     IF_PROCESSOR(, .function = &do_th)},
+    {.name = "CTH",   .code = CMD_CTH,    .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2((const char*)"CTH"))    IF_PROCESSOR(, .function = &do_cth)}
 };
 
 const size_t SIZE_ABOUT_COMMANDS = sizeof(about_commands) / sizeof(about_commands[0]);
+
 
 #endif // COMMON_H_

@@ -400,16 +400,38 @@ Tree_node* LangGetMathFunction(Language* language, size_t* number_token, Tree_st
     Tree_node* math_func_node = NULL;
     ArrayGetElement(&(language->array_with_tokens), &math_func_node, *number_token);
 
-    if (math_func_node->type == OPERATOR) {
-        for (size_t i = 0; i < sizeof(key_words) / sizeof(key_words[0]); ++i) {
-            if (math_func_node->value.operators == key_words[i].type && 
-                (key_words[i].type != OPERATOR_IF && key_words[i].type != OPERATOR_WHILE 
-                && key_words[i].type != OPERATOR_INPUT && key_words[i].type != OPERATOR_PRINT)) {
-                    (*number_token)++;
-                    return math_func_node;
-            }
+    if (math_func_node->type != OPERATOR) 
+        return NULL;
+
+    for (size_t i = 0; i < sizeof(key_words) / sizeof(key_words[0]); ++i) {
+        if (math_func_node->value.operators == key_words[i].type && 
+            (key_words[i].type != OPERATOR_IF && key_words[i].type != OPERATOR_WHILE && key_words[i].type != OPERATOR_INPUT && key_words[i].type != OPERATOR_PRINT)) {
+                (*number_token)++;
+
+                Tree_node* cur_token = NULL;
+                ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token);
+                if (cur_token->type != OPERATOR || cur_token->value.operators != OPERATOR_OPEN_BRACKET) // wait (
+                    return NULL;
+
+                (*number_token)++;
+                free(cur_token);
+
+                Tree_node* expression_node = LangGetExpression(language, number_token, status);
+                if (expression_node == NULL)
+                    return NULL;
+
+                ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token);
+                if (cur_token->type != OPERATOR || cur_token->value.operators != OPERATOR_CLOSE_BRACKET) // wait )
+                    return NULL;
+
+                (*number_token)++;
+                free(cur_token);
+                
+                math_func_node->left_node = expression_node;
+
+                return math_func_node;
         }
-    }
+    } 
 
     return NULL;
 }

@@ -6,6 +6,7 @@
 #include "processor.h"
 
 #include "check_errors.h"
+#include "math.h"
 #include "../proc_common.h"
 #include "onegin.h"
 #include "stack.h"
@@ -431,6 +432,189 @@ processor_status do_popmn(Processor* processor) {
     processor->ram[reg] = (int)num;
 
     // draw_ram(processor);
+
+    return PROC_SUCCESS;
+}
+
+processor_status do_ln(Processor* processor) {
+    assert(processor);
+
+    type_t num = 0;
+
+    CHECK_AND_RETURN_ERRORS_STACK(StackPop(&processor->stack, &num));
+
+    if (num > 0) {
+        CHECK_AND_RETURN_ERRORS_STACK(StackPush(&processor->stack, (type_t)log(num)));
+    }
+    else
+        return PROC_LN_NEGATIVE_NUM;
+
+    return PROC_SUCCESS;
+}
+
+processor_status do_log(Processor* processor) {
+    assert(processor);
+
+    type_t first_num  = 0;
+    type_t second_num = 0;
+
+    CHECK_AND_RETURN_ERRORS_STACK(StackPop(&processor->stack, &first_num));
+    CHECK_AND_RETURN_ERRORS_STACK(StackPop(&processor->stack, &second_num));
+
+    if (first_num > 0 && first_num != 1 && second_num > 0) {
+        CHECK_AND_RETURN_ERRORS_STACK(StackPush(&processor->stack, (type_t)(log(second_num) / log(first_num))));
+    }
+    else
+        return PROC_LOG_NEGATIVE_NUM;
+
+    return PROC_SUCCESS;
+}
+
+processor_status do_sin(Processor* processor) {
+    assert(processor);
+
+    type_t num = 0;
+
+    CHECK_AND_RETURN_ERRORS_STACK(StackPop(&processor->stack, &num));
+    CHECK_AND_RETURN_ERRORS_STACK(StackPush(&processor->stack, (type_t)sin(num)));
+
+    return PROC_SUCCESS;
+}
+
+processor_status do_cos(Processor* processor) {
+    assert(processor);
+
+    type_t num = 0;
+
+    CHECK_AND_RETURN_ERRORS_STACK(StackPop(&processor->stack, &num));
+    CHECK_AND_RETURN_ERRORS_STACK(StackPush(&processor->stack, (type_t)cos(num)));
+
+    return PROC_SUCCESS;
+}
+
+processor_status do_tg(Processor* processor) {
+    assert(processor);
+
+    type_t num = 0;
+
+    CHECK_AND_RETURN_ERRORS_STACK(StackPop(&processor->stack, &num));
+    CHECK_AND_RETURN_ERRORS_STACK(StackPush(&processor->stack, (type_t)tan(num)));
+
+    return PROC_SUCCESS;
+}
+
+processor_status do_ctg(Processor* processor) {
+    assert(processor);
+
+    type_t num = 0;
+    CHECK_AND_RETURN_ERRORS_STACK(StackPop(&processor->stack, &num));
+    double tg = tan(num);
+
+    if (fabs(tg) >= 1e-10) {
+        CHECK_AND_RETURN_ERRORS_STACK(StackPush(&processor->stack, (type_t)(1.0 / tg)));
+    }
+    else
+        return PROC_CTG_NEGATIVE_NUM;
+
+    return PROC_SUCCESS;
+}
+
+processor_status do_arcsin(Processor* processor) {
+    assert(processor);
+
+    type_t num = 0;
+
+    CHECK_AND_RETURN_ERRORS_STACK(StackPop(&processor->stack, &num));
+    if (num >= -1 && num <= 1) {
+        CHECK_AND_RETURN_ERRORS_STACK(StackPush(&processor->stack, (type_t)asin(num)));
+    }
+    else
+        return PROC_ARCSIN_NEGATIVE_NUM;
+
+    return PROC_SUCCESS;
+}
+
+processor_status do_arccos(Processor* processor) {
+    assert(processor);
+
+    type_t num = 0;
+
+    CHECK_AND_RETURN_ERRORS_STACK(StackPop(&processor->stack, &num));
+    if (num >= -1 && num <= 1) {
+        CHECK_AND_RETURN_ERRORS_STACK(StackPush(&processor->stack, (type_t)acos(num)));
+    }
+    else
+        return PROC_ARCCOS_NEGATIVE_NUM;
+
+    return PROC_SUCCESS;
+}
+
+processor_status do_arctg(Processor* processor) {
+    assert(processor);
+
+    type_t num = 0;
+
+    CHECK_AND_RETURN_ERRORS_STACK(StackPop(&processor->stack, &num));
+    CHECK_AND_RETURN_ERRORS_STACK(StackPush(&processor->stack, (type_t)atan(num)));
+
+    return PROC_SUCCESS;
+}
+
+processor_status do_arcctg(Processor* processor) {
+    assert(processor);
+
+    type_t num = 0;
+
+    CHECK_AND_RETURN_ERRORS_STACK(StackPop(&processor->stack, &num));
+    CHECK_AND_RETURN_ERRORS_STACK(StackPush(&processor->stack, (type_t)(M_PI_2 - atan(num))));
+
+    return PROC_SUCCESS;
+}
+
+processor_status do_sh(Processor* processor) {
+    assert(processor);
+
+    type_t num = 0;
+
+    CHECK_AND_RETURN_ERRORS_STACK(StackPop(&processor->stack, &num));
+    CHECK_AND_RETURN_ERRORS_STACK(StackPush(&processor->stack, (type_t)sinh(num)));
+
+    return PROC_SUCCESS;
+}
+
+processor_status do_ch(Processor* processor) {
+    assert(processor);
+
+    type_t num = 0;
+
+    CHECK_AND_RETURN_ERRORS_STACK(StackPop(&processor->stack, &num));
+    CHECK_AND_RETURN_ERRORS_STACK(StackPush(&processor->stack, (type_t)cosh(num)));
+
+    return PROC_SUCCESS;
+}
+
+processor_status do_th(Processor* processor) {
+    assert(processor);
+
+    type_t num = 0;
+
+    CHECK_AND_RETURN_ERRORS_STACK(StackPop(&processor->stack, &num));
+    CHECK_AND_RETURN_ERRORS_STACK(StackPush(&processor->stack, (type_t)tanh(num)));
+
+    return PROC_SUCCESS;
+}
+
+processor_status do_cth(Processor* processor) {
+    assert(processor);
+
+    type_t num = 0;
+
+    CHECK_AND_RETURN_ERRORS_STACK(StackPop(&processor->stack, &num));
+    if (fabs(sinh(num)) >= 1e-10) {
+        CHECK_AND_RETURN_ERRORS_STACK(StackPush(&processor->stack, (type_t)(cosh(num) / sinh(num))));
+    }
+    else
+        return PROC_CTH_NEGATIVE_NUM;
 
     return PROC_SUCCESS;
 }
