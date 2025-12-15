@@ -260,7 +260,7 @@ double Calculating(Language* language, Tree_node* tree_node) {
                     return tanh(Calculating(language, tree_node->left_node));
                 case OPERATOR_CTH: 
                     CALCULATING_CTH;
-                case OPERATOR_EQUAL:
+                case OPERATOR_ASSIGNMENT:
                 case OPERATOR_CHANGE:
                 case OPERATOR_COMMON:
                 case OPERATOR_IF:

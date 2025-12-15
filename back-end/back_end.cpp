@@ -98,7 +98,7 @@ void CreateAsmFile(Language* language, Tree_node* tree_node, FILE* asm_file) {
             case OPERATOR_CH:     PrintMathFunction(language, tree_node, asm_file, "CH");     break;
             case OPERATOR_TH:     PrintMathFunction(language, tree_node, asm_file, "TH");     break;
             case OPERATOR_CTH:    PrintMathFunction(language, tree_node, asm_file, "CTH");    break;
-            case OPERATOR_EQUAL:  
+            case OPERATOR_ASSIGNMENT:  
             case OPERATOR_CHANGE: PrintAssignment(language, tree_node, asm_file);             break;
             case OPERATOR_IF:     PrintIf(language, tree_node, asm_file);                     break;
             case OPERATOR_ELSE:   break;
@@ -107,6 +107,9 @@ void CreateAsmFile(Language* language, Tree_node* tree_node, FILE* asm_file) {
                                   CreateAsmFile(language, tree_node->right_node, asm_file);   break;
             case OPERATOR_INPUT:  fprintf(asm_file, "IN\n");                                  break;
             case OPERATOR_PRINT:  PrintOut(language, tree_node, asm_file);                    break;
+            case OPERATOR_ABOVE:
+            case OPERATOR_BEFORE:
+            case OPERATOR_EQUAL: 
             case OPERATOR_OPEN_BRACKET:  
             case OPERATOR_CLOSE_BRACKET: 
             case OPERATOR_OPEN_FIGURE:   
@@ -153,11 +156,31 @@ void PrintIf(Language* language, Tree_node* tree_node, FILE* asm_file) {
     assert(asm_file);
     assert(tree_node);
 
-    CreateAsmFile(language, tree_node->left_node, asm_file);
-    fprintf(asm_file, "PUSH 0\n");
+    Tree_node* condition = tree_node->left_node;
+
+    if (condition->type == OPERATOR && (condition->value.operators == OPERATOR_ABOVE ||
+                                        condition->value.operators == OPERATOR_BEFORE ||
+                                        condition->value.operators == OPERATOR_EQUAL)) {
+        Type_operators type_operator = condition->value.operators;
+
+        CreateAsmFile(language, condition->left_node, asm_file);
+        CreateAsmFile(language, condition->right_node, asm_file);
+
+        if (type_operator == OPERATOR_ABOVE)
+            fprintf(asm_file, "JBE ");
+        else if (type_operator == OPERATOR_BEFORE)
+            fprintf(asm_file, "JAE ");
+        if (type_operator == OPERATOR_EQUAL)
+            fprintf(asm_file, "JE ");
+    }
+    else {
+        CreateAsmFile(language, condition, asm_file);
+        fprintf(asm_file, "PUSH 0\n"
+                          "JE ");
+    }
     
     if (tree_node->right_node->type != OPERATOR || tree_node->right_node->value.operators != OPERATOR_ELSE) {
-        fprintf(asm_file, "JE :end_if_%zu\n", language->cnt_labels.cnt_if);
+        fprintf(asm_file, ":end_if_%zu\n", language->cnt_labels.cnt_if);
         CreateAsmFile(language, tree_node->right_node, asm_file);
     }    
     else
@@ -173,7 +196,7 @@ void PrintElse(Language* language, Tree_node* tree_node, FILE* asm_file) {
     assert(asm_file);
     assert(tree_node);
 
-    fprintf(asm_file, "JE :else_%zu\n", language->cnt_labels.cnt_else);
+    fprintf(asm_file, ":else_%zu\n", language->cnt_labels.cnt_else);
 
     CreateAsmFile(language, tree_node->left_node, asm_file); // in if
     fprintf(asm_file, "JMP :end_if_%zu\n", language->cnt_labels.cnt_if);

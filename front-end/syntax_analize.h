@@ -13,6 +13,10 @@ Tree_node* LangGetWhileOrIf(Language* language, size_t* number_token, Tree_statu
 
 Tree_node* LangGetElse(Language* language, size_t* number_token, Tree_status* status, Tree_node* tree_node_operator);
 
+Tree_node* LangGetCompares(Language* language, size_t* number_token, Tree_status* status);
+
+Tree_node* LangGetEquals(Language* language, size_t* number_token, Tree_status* status);
+
 Tree_node* LangGetAssignment(Language* language, size_t* number_token, Tree_status* status);
 
 Tree_node* LangGetExpression(Language* language, size_t* number_token, Tree_status* status);

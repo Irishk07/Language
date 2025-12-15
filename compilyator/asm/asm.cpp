@@ -166,9 +166,8 @@ assembler_status Assemblirovanie(Assembler* assembler) {
     for (int i = 0; i < assembler->about_text.cnt_strok; ++i) {
         CHECK_AND_RETURN_ERRORS_ASM(AsmVerify(assembler));
 
-        if (strlen(assembler->about_text.pointer_on_text[i]) == 0) {
+        if (strlen(assembler->about_text.pointer_on_text[i]) == 0)
             continue;
-        }
 
         if (assembler->about_text.pointer_on_text[i][0] == ':') {
             if (FirstOrSecondCompile(assembler) == FIRST_COMPILE)

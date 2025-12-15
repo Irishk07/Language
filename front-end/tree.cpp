@@ -99,33 +99,36 @@ const char* IndetifySign(Tree_node* tree_node) {
     switch(tree_node->type) {
         case OPERATOR:
             switch (tree_node->value.operators) {
-                case OPERATOR_ADD:    return "+";
-                case OPERATOR_SUB:    return "-";
-                case OPERATOR_MUL:    return "*";
-                case OPERATOR_DIV:    return "/";
-                case OPERATOR_POW:    return "^";
-                case OPERATOR_LN:     return "ln";
-                case OPERATOR_LOG:    return "log";
-                case OPERATOR_SIN:    return "sin";
-                case OPERATOR_COS:    return "cos";
-                case OPERATOR_TG:     return "tg";
-                case OPERATOR_CTG:    return "ctg";
-                case OPERATOR_ARCSIN: return "arcsin";
-                case OPERATOR_ARCCOS: return "arccos";
-                case OPERATOR_ARCTG:  return "arctg";
-                case OPERATOR_ARCCTG: return "arcctg";
-                case OPERATOR_SH:     return "sh";
-                case OPERATOR_CH:     return "ch";
-                case OPERATOR_TH:     return "th";
-                case OPERATOR_CTH:    return "cth";
-                case OPERATOR_EQUAL:  return "=";
-                case OPERATOR_CHANGE: return ":=";
-                case OPERATOR_COMMON: return ";";
-                case OPERATOR_IF:     return "if";
-                case OPERATOR_WHILE:  return "while";
-                case OPERATOR_ELSE:   return "else";
-                case OPERATOR_INPUT:  return "input";
-                case OPERATOR_PRINT:  return "print";
+                case OPERATOR_ADD:           return "+";
+                case OPERATOR_SUB:           return "-";
+                case OPERATOR_MUL:           return "*";
+                case OPERATOR_DIV:           return "/";
+                case OPERATOR_POW:           return "^";
+                case OPERATOR_LN:            return "ln";
+                case OPERATOR_LOG:           return "log";
+                case OPERATOR_SIN:           return "sin";
+                case OPERATOR_COS:           return "cos";
+                case OPERATOR_TG:            return "tg";
+                case OPERATOR_CTG:           return "ctg";
+                case OPERATOR_ARCSIN:        return "arcsin";
+                case OPERATOR_ARCCOS:        return "arccos";
+                case OPERATOR_ARCTG:         return "arctg";
+                case OPERATOR_ARCCTG:        return "arcctg";
+                case OPERATOR_SH:            return "sh";
+                case OPERATOR_CH:            return "ch";
+                case OPERATOR_TH:            return "th";
+                case OPERATOR_CTH:           return "cth";
+                case OPERATOR_ASSIGNMENT:    return "=";
+                case OPERATOR_CHANGE:        return ":=";
+                case OPERATOR_COMMON:        return ";";
+                case OPERATOR_IF:            return "if";
+                case OPERATOR_WHILE:         return "while";
+                case OPERATOR_ELSE:          return "else";
+                case OPERATOR_INPUT:         return "input";
+                case OPERATOR_PRINT:         return "print";
+                case OPERATOR_ABOVE:         return ">";
+                case OPERATOR_BEFORE:        return "<";
+                case OPERATOR_EQUAL:         return "==";
                 case OPERATOR_OPEN_BRACKET:  return "(";
                 case OPERATOR_CLOSE_BRACKET: return ")";
                 case OPERATOR_OPEN_FIGURE:   return "{";
@@ -310,8 +313,16 @@ void PrintNodeToDot(Language* language, FILE *file, Tree_node* tree_node) {
     }
 
     else if (tree_node->type != WRONG_TYPE) {
-        fprintf(file, "    node_%p [label=\"{'%s'}\", fillcolor = \"#ff99ffff\"];\n", 
-                      (void *)tree_node, IndetifySign(tree_node));
+        const char* sign = IndetifySign(tree_node);
+        if (*sign == '<')
+            fprintf(file, "    node_%p [label=\"{'&lt'}\", fillcolor = \"#ff99ffff\"];\n", 
+                         (void *)tree_node);
+        else if (*sign == '>')
+            fprintf(file, "    node_%p [label=\"{'&gt'}\", fillcolor = \"#ff99ffff\"];\n", 
+                         (void *)tree_node);  
+        else
+            fprintf(file, "    node_%p [label=\"{'%s'}\", fillcolor = \"#ff99ffff\"];\n", 
+                        (void *)tree_node, sign);
     }  
 
 
