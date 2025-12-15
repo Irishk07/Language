@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-#include "../back_common.h"
+#include "../proc_common.h"
 
 #define CHECK_AND_RETURN_ERRORS_ASM(error, ...)                          \
         if ((error) != ASM_SUCCESS) {                                    \

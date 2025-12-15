@@ -6,7 +6,7 @@
 
 #include "asm.h"
 
-#include "../back_common.h"
+#include "../proc_common.h"
 #include "onegin.h"
 
 

@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "../back_common.h"
+#include "../proc_common.h"
 #include "debug.h"
 #include "hash.h"
 #include "variable_information.h"

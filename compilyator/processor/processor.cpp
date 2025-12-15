@@ -6,7 +6,7 @@
 #include "processor.h"
 
 #include "check_errors.h"
-#include "../back_common.h"
+#include "../proc_common.h"
 #include "onegin.h"
 #include "stack.h"
 #include "variable_information.h"
