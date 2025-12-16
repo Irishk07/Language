@@ -13,6 +13,8 @@ enum Status_of_comparing {
 
 Tree_node* LangGetComandir(Language* language, Tree_status* status);
 
+Tree_node* LangGetMainFunction(Language* language, size_t* number_token, Tree_status* status);
+
 Tree_node* LangGetDefinitionFunction(Language* language, size_t* number_token, Tree_status* status);
 
 Tree_node* LangGetParams(Language* language, size_t* number_token, Tree_status* status);

@@ -74,6 +74,7 @@ enum Type_operators {
     OPERATOR_CALL_FUNCTION = 37,
     OPERATOR_RETURN        = 38,
     OPERATOR_PARAM         = 39,
+    OPERATOR_MAIN_FUNCTION = 40,
     WRONG_OPERATOR
 };
 
@@ -133,6 +134,7 @@ About_function const key_words[] = {
     KEY_WORD("I want to change my order:",                     OPERATOR_CHANGE,        "="),
     KEY_WORD("I repeat changes:",                              OPERATOR_CHANGE,        "="),
     KEY_WORD("Recipe:",                                        OPERATOR_DEF_FUNCTION,  "func"),
+    KEY_WORD("Welcome!",                                       OPERATOR_MAIN_FUNCTION, "main"),
     KEY_WORD("Waiter!",                                        OPERATOR_CALL_FUNCTION, "call"),
     KEY_WORD("Return the money for",                           OPERATOR_RETURN,        "return")
 };

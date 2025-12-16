@@ -20,7 +20,8 @@
 
 
 // +++++++++++++++++|||||++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ //
-// Comandir           ::= {Operators+ | DefinitionFunction+} 'Bye'                                                                                      //
+// Comandir           ::= {MainFunction | Operators+ | DefinitionFunction+} 'Bye'                                                                       //
+// MainFunction       ::= "Welcome!" Variable '+___-' {Return | Operators+} '-___+'                                                                     // 
 // DefinitionFunction ::= "Recipe:" Variable '*_^' Variable{'and' Variable}* '^_*' '+___-' {Return | Operators+} '-___+'                                // 
 // Return             ::= "Return the money for" Expression                                                                                             //
 // Operators          ::= { AssignmentOrChange | Changes | WhileOrIf | '+___-' Operators+ '-___+' | Print} ';)'                                         //     
@@ -58,13 +59,14 @@ Tree_node* LangGetComandir(Language* language, Tree_status* status) {
     Tree_node* result_node = NULL;
 
     do {
-        Tree_node* cur_node = LangGetDefinitionFunction(language, &number_token, status);
-
-        if (cur_node == NULL) {
+        Tree_node* cur_node = LangGetMainFunction(language, &number_token, status);
+    
+        if (cur_node == NULL)
+            cur_node = LangGetDefinitionFunction(language, &number_token, status);
+        if (cur_node == NULL)
             cur_node = LangGetOperators(language, &number_token, status);
-            if (cur_node == NULL)
-                break;
-        }
+        if (cur_node == NULL)
+            break;
 
         if (result_node == NULL)
             result_node = NodeCtor(OPERATOR, (type_t){.operators = OPERATOR_COMMON}, cur_node, NULL);
@@ -88,6 +90,32 @@ Tree_node* LangGetComandir(Language* language, Tree_status* status) {
     number_token++;
 
     return result_node;
+}
+
+Tree_node* LangGetMainFunction(Language* language, size_t* number_token, Tree_status* status) {
+    assert(language);
+    assert(status);
+
+    Tree_node* cur_token = NULL;
+    ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token); 
+    if (cur_token->type != OPERATOR || cur_token->value.operators != OPERATOR_MAIN_FUNCTION)
+        return NULL;
+
+    (*number_token)++;
+    Tree_node* func_node = cur_token;
+
+    Tree_node* name_node = LangGetVariable(language, number_token, status);
+    if (name_node == NULL)
+        return NULL;
+
+    Tree_node* body_node = LangGetFunctionBody(language, number_token, status);
+    if (body_node == NULL)
+        return NULL;
+
+    func_node->left_node  = name_node;
+    func_node->right_node = body_node;
+
+    return func_node;
 }
 
 Tree_node* LangGetDefinitionFunction(Language* language, size_t* number_token, Tree_status* status) {

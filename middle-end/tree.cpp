@@ -298,6 +298,7 @@ const char* IndetifySign(Tree_node* tree_node) {
                 case OPERATOR_FINISH_SYMBOL: return "$";
                 case OPERATOR_MATCH:         return "->";
                 case OPERATOR_DEF_FUNCTION:  return "func";
+                case OPERATOR_MAIN_FUNCTION: return "main";
                 case OPERATOR_CALL_FUNCTION: return "call";
                 case OPERATOR_RETURN:        return "return";
                 case OPERATOR_PARAM:         return ",";
