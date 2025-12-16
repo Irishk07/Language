@@ -434,10 +434,10 @@ void PrintNodeToDot(Language* language, FILE *file, Tree_node* tree_node) {
     else if (tree_node->type != WRONG_TYPE) {
         const char* sign = IndetifySign(tree_node);
         if (*sign == '<')
-            fprintf(file, "    node_%p [label=\"{'&lt'}\", fillcolor = \"#ff99ffff\"];\n", 
+            fprintf(file, "    node_%p [label=\"{'&lt;'}\", fillcolor = \"#ff99ffff\"];\n", 
                          (void *)tree_node);
         else if (*sign == '>')
-            fprintf(file, "    node_%p [label=\"{'&gt'}\", fillcolor = \"#ff99ffff\"];\n", 
+            fprintf(file, "    node_%p [label=\"{'&gt;'}\", fillcolor = \"#ff99ffff\"];\n", 
                          (void *)tree_node);  
         else
             fprintf(file, "    node_%p [label=\"{'%s'}\", fillcolor = \"#ff99ffff\"];\n", 

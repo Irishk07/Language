@@ -268,6 +268,9 @@ double Calculating(Language* language, Tree_node* tree_node) {
                 case OPERATOR_ELSE:
                 case OPERATOR_INPUT:
                 case OPERATOR_PRINT:
+                case OPERATOR_ABOVE:
+                case OPERATOR_BEFORE:
+                case OPERATOR_EQUAL:
                 case OPERATOR_OPEN_BRACKET:
                 case OPERATOR_CLOSE_BRACKET:
                 case OPERATOR_OPEN_FIGURE:
