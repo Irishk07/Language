@@ -13,6 +13,14 @@ enum Status_of_comparing {
 
 Tree_node* LangGetComandir(Language* language, Tree_status* status);
 
+Tree_node* LangGetDefinitionFunction(Language* language, size_t* number_token, Tree_status* status);
+
+Tree_node* LangGetParams(Language* language, size_t* number_token, Tree_status* status);
+
+Tree_node* LangGetFunctionBody(Language* language, size_t* number_token, Tree_status* status);
+
+Tree_node* LangGetReturn(Language* language, size_t* number_token, Tree_status* status);
+
 Tree_node* LangGetOperators(Language* language, size_t* number_token, Tree_status* status);
 
 Tree_node* LangGetWhileOrIf(Language* language, size_t* number_token, Tree_status* status);
@@ -46,6 +54,8 @@ Tree_node* LangGetMathFunction(Language* language, size_t* number_token, Tree_st
 Tree_node* LangGetInput(Language* language, size_t* number_token, Tree_status* status);
 
 Tree_node* LangGetPrint(Language* language, size_t* number_token, Tree_status* status);
+
+Tree_node* LangGetCallFuntion(Language* language, size_t* number_token, Tree_status* status);
 
 
 #endif // SYNTAX_ANALIZE_H_

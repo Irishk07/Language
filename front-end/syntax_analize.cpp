@@ -11,34 +11,42 @@
 #include "syntax_analize.h"
 #include "tree.h"
 
-// * 0+ times
-// + 1+ times
-// ? 0 or 1 times
+
+// +|||++++++++++++ //
+// *   0+ times     //
+// +   1+ times     //
+// ?   0 or 1 times //
+// +|||++++++++++++ //
 
 
-// +++++++++++++++++|||||+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-// Comandir          ::= Operators+ 'Bye'
-// Operators         ::= { Assignment | Changes | WhileOrIf | '+___-' Operators+ '-___+' | Print} ';)'                                              
-// WhileOrIf         ::= {If | While}
-// While             ::= "I didn't write complaint only because" '*_^' Expression  {[Compares | Equals] Expression}? '^_*' Operators
-// If                ::= "We resolve conflict if you call chef and check" '*_^' Expression  {[Compares | Equals] Expression}? '^_*' Operators Else?
-// Else              ::= "We won't resolve conflict. But" Operators
-// Compares          ::= [< >] Expression
-// Equals            ::= "==" Expression
-// Print             ::= "Calculate how much dish" '*_^' Expression '^_*'
-// Changes           ::= "I want to change my order:" Expression '->' Variable
-//                       "I repeat changes:" Expression '->' Variable
-// Assignment        ::= "I want to place an order: bring to me" Expression '->' Variable
-//                   ::= "I repeat my order:" Expression '->' Variable
-// Expression        ::= Term{[+ -]Term}*
-// Term              ::= Pow{[* /]Pow}*
-// Pow               ::= PrimaryExpression{[^]PrimaryExpression}*
-// PrimaryExpression ::= '*_^' Expression '^_*' | Number | Variable | MathFunction | Input                                   
-// Number            ::= [0-9]+
-// Variable          ::= '-'? [a-zA-Z_][a-zA-z0-9_]*
-// MathFunction      ::= [ln, sin, cos, tg, ctg, arcsin, arccos, arctg, arcctg, sh, ch, th, cth] '*_^' Expression '^_*'
-// Input             ::= "Bring menu"
-// +++++++++++++++++|||||+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// +++++++++++++++++|||||++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ //
+// Comandir           ::= {Operators+ | DefinitionFunction+} 'Bye'                                                                                      //
+// DefinitionFunction ::= "Recipe:" Variable '*_^' Variable{'and' Variable}* '^_*' '+___-' {Return | Operators+} '-___+'                                // 
+// Return             ::= "Return the money for" Expression                                                                                             //
+// Operators          ::= { AssignmentOrChange | Changes | WhileOrIf | '+___-' Operators+ '-___+' | Print} ';)'                                         //     
+// WhileOrIf          ::= {If | While}                                                                                                                  //
+// While              ::= "I didn't write complaint only because" '*_^' Expression  {[Compares | Equals] Expression}? '^_*' Operators                   //
+// If                 ::= "We resolve conflict if you call chef and check" '*_^' Expression  {[Compares | Equals] Expression}? '^_*' Operators Else?    //
+// Else               ::= "We won't resolve conflict. But" Operators                                                                                    //
+// Compares           ::= [< >] Expression                                                                                                              //
+// Equals             ::= "==" Expression                                                                                                               //
+// Print              ::= "Calculate how much dish" '*_^' Expression '^_*'                                                                              //
+// AssignmentOrChange ::= {Assignment | Changes}                                                                                                        //
+// Changes            ::= "I want to change my order:" Expression '->' Variable                                                                         //
+//                        "I repeat changes:" Expression '->' Variable                                                                                  //
+// Assignment         ::= "I want to place an order: bring to me" Expression '->' Variable                                                              //
+//                        "I repeat my order:" Expression '->' Variable                                                                                 //
+// Expression         ::= Term{[+ -]Term}*                                                                                                              //
+// Term               ::= Pow{[* /]Pow}*                                                                                                                //
+// Pow                ::= PrimaryExpression{[^]PrimaryExpression}*                                                                                      //
+// PrimaryExpression  ::= '*_^' Expression '^_*' | Number | Variable | MathFunction | Input | CallFunction                                              //
+// Number             ::= [0-9]+                                                                                                                        //
+// Variable           ::= '-'? [a-zA-Z_][a-zA-z0-9_]*                                                                                                   //
+// MathFunction       ::= [ln, sin, cos, tg, ctg, arcsin, arccos, arctg, arcctg, sh, ch, th, cth] '*_^' Expression '^_*'                                //
+// Input              ::= "Bring menu"                                                                                                                  //
+// CallFunction       ::= "Waiter!" Variable '*_^' Variable{'and' Variable}* '^_*'                                                                      //
+// +++++++++++++++++|||||++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ //
+
 
 
 Tree_node* LangGetComandir(Language* language, Tree_status* status) {
@@ -50,17 +58,20 @@ Tree_node* LangGetComandir(Language* language, Tree_status* status) {
     Tree_node* result_node = NULL;
 
     do {
-        Tree_node* operator_node = LangGetOperators(language, &number_token, status);
+        Tree_node* cur_node = LangGetDefinitionFunction(language, &number_token, status);
 
-        if (operator_node == NULL)
-            break;
+        if (cur_node == NULL) {
+            cur_node = LangGetOperators(language, &number_token, status);
+            if (cur_node == NULL)
+                break;
+        }
 
         if (result_node == NULL)
-            result_node = NodeCtor(OPERATOR, (type_t){.operators = OPERATOR_COMMON}, operator_node, NULL);
+            result_node = NodeCtor(OPERATOR, (type_t){.operators = OPERATOR_COMMON}, cur_node, NULL);
         else if (result_node->right_node == NULL)
-            result_node->right_node = operator_node;
+            result_node->right_node = cur_node;
         else
-            result_node = NodeCtor(OPERATOR, (type_t){.operators = OPERATOR_COMMON}, result_node, operator_node);
+            result_node = NodeCtor(OPERATOR, (type_t){.operators = OPERATOR_COMMON}, result_node, cur_node);
 
         TreeHTMLDump(language, result_node, DUMP_INFO, NOT_ERROR_DUMP);
     }
@@ -77,6 +88,143 @@ Tree_node* LangGetComandir(Language* language, Tree_status* status) {
     number_token++;
 
     return result_node;
+}
+
+Tree_node* LangGetDefinitionFunction(Language* language, size_t* number_token, Tree_status* status) {
+    assert(language);
+    assert(status);
+
+    Tree_node* cur_token = NULL;
+    ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token); 
+    if (cur_token->type != OPERATOR || cur_token->value.operators != OPERATOR_DEF_FUNCTION)
+        return NULL;
+
+    (*number_token)++;
+    Tree_node* func_node = cur_token;
+
+    Tree_node* name_node = LangGetVariable(language, number_token, status);
+    if (name_node == NULL)
+        return NULL;
+
+    Tree_node* param_node = LangGetParams(language, number_token, status);
+    if (param_node == NULL)
+        return NULL;
+    param_node->left_node = name_node;
+    func_node->left_node = param_node;
+
+    Tree_node* body_node = LangGetFunctionBody(language, number_token, status);
+    if (body_node == NULL)
+        return NULL;
+    func_node->right_node = body_node;
+
+    return func_node;
+}
+
+Tree_node* LangGetParams(Language* language, size_t* number_token, Tree_status* status) {
+    assert(language);
+    assert(status);
+
+    Tree_node* cur_token = NULL;
+
+    ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token); 
+    if (cur_token->type != OPERATOR || cur_token->value.operators != OPERATOR_OPEN_BRACKET) // wait (
+        return NULL;
+    (*number_token)++;
+    free(cur_token);
+
+    Tree_node* variable_node = LangGetVariable(language, number_token, status);
+    if (variable_node == NULL)
+        return NULL;
+
+    Tree_node* param_node = NodeCtor(OPERATOR, (type_t){.operators = OPERATOR_PARAM}, NULL, variable_node);
+
+    ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token);
+    while (cur_token->type != OPERATOR || cur_token->value.operators != OPERATOR_CLOSE_BRACKET) { // wait )
+        if (cur_token->type == OPERATOR && cur_token->value.operators == OPERATOR_PARAM) { // wait ,
+            (*number_token)++;
+
+            variable_node = LangGetVariable(language, number_token, status);
+            if (variable_node == NULL)
+                return NULL;
+
+            cur_token->left_node   = param_node->right_node;
+            cur_token->right_node  = variable_node;
+            param_node->right_node = cur_token;
+
+            ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token);
+        }
+    }
+
+    (*number_token)++;
+    free(cur_token); // here )
+
+    return param_node;
+}
+
+Tree_node* LangGetFunctionBody(Language* language, size_t* number_token, Tree_status* status) {
+    assert(language);
+    assert(status);
+
+    Tree_node* cur_token = NULL;
+    Tree_node* body_node = NULL;
+
+    ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token);
+    if (cur_token->type != OPERATOR || cur_token->value.operators != OPERATOR_OPEN_FIGURE) // wait {
+        return NULL;
+    (*number_token)++;
+    free(cur_token);
+
+    ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token);
+    while (cur_token->type != OPERATOR || cur_token->value.operators != OPERATOR_CLOSE_FIGURE) { // wait }
+        Tree_node* operators_node = LangGetOperators(language, number_token, status);
+        if (operators_node == NULL)
+            operators_node = LangGetReturn(language, number_token, status);
+
+        if (operators_node == NULL)
+            return NULL;
+
+        if (body_node == NULL)
+            body_node = operators_node;
+        else
+            body_node = NodeCtor(OPERATOR, (type_t){.operators = OPERATOR_COMMON}, body_node, operators_node);
+
+        ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token);
+    }
+
+    if (body_node != NULL) {
+        (*number_token)++;
+        free(cur_token);
+
+        return body_node;
+    }
+
+    return NULL;
+}
+
+Tree_node* LangGetReturn(Language* language, size_t* number_token, Tree_status* status) {
+    assert(language);
+    assert(status);
+
+    Tree_node* return_node = NULL;
+    ArrayGetElement(&(language->array_with_tokens), &return_node, *number_token);
+    if (return_node->type != OPERATOR || return_node->value.operators != OPERATOR_RETURN)
+        return NULL;
+    (*number_token)++;
+
+    Tree_node* expression_node = LangGetExpression(language, number_token, status);
+
+    if (expression_node == NULL)
+        return NULL;
+    return_node->left_node = expression_node;
+
+    Tree_node* cur_token = NULL;
+    ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token);
+    if (cur_token->type == OPERATOR && cur_token->value.operators == OPERATOR_COMMON) {
+        (*number_token)++;
+        cur_token->left_node = return_node;
+    }     
+
+    return cur_token;
 }
 
 Tree_node* LangGetOperators(Language* language, size_t* number_token, Tree_status* status) {
@@ -164,6 +312,7 @@ Tree_node* LangGetPrint(Language* language, size_t* number_token, Tree_status* s
 
                 (*number_token)++;
                 argument_node->left_node = print_node;
+                
                 return argument_node;
             }
         }
@@ -231,8 +380,8 @@ Tree_node* LangGetElse(Language* language, size_t* number_token, Tree_status* st
 
         Tree_node* operator_node = LangGetOperators(language, number_token, status);
 
-        cur_token->left_node  = if_operator_node->right_node;  // value if
-        cur_token->right_node = operator_node; // value else
+        cur_token->left_node         = if_operator_node->right_node;  // value if
+        cur_token->right_node        = operator_node; // value else
         if_operator_node->right_node = cur_token;
     }
 
@@ -509,11 +658,15 @@ Tree_node* LangGetPrimaryExpression(Language* language, size_t* number_token, Tr
         if (element_node != NULL)
             return element_node;
 
-        element_node = LangGetMathFunction(language, number_token, status);
+        element_node = LangGetInput(language, number_token, status);
         if (element_node != NULL)
             return element_node;
 
-        element_node = LangGetInput(language, number_token, status);
+        element_node = LangGetCallFuntion(language, number_token, status);
+        if (element_node != NULL)
+            return element_node;
+
+        element_node = LangGetMathFunction(language, number_token, status);
         if (element_node != NULL)
             return element_node;
     }
@@ -578,7 +731,7 @@ Tree_node* LangGetMathFunction(Language* language, size_t* number_token, Tree_st
 
     for (size_t i = 0; i < sizeof(key_words) / sizeof(key_words[0]); ++i) {
         if (math_func_node->value.operators == key_words[i].type && 
-            (key_words[i].type != OPERATOR_IF && key_words[i].type != OPERATOR_WHILE && key_words[i].type != OPERATOR_INPUT && key_words[i].type != OPERATOR_PRINT)) {
+            (key_words[i].type != OPERATOR_IF && key_words[i].type != OPERATOR_WHILE && key_words[i].type != OPERATOR_PRINT)) {
                 (*number_token)++;
 
                 Tree_node* cur_token = NULL;
@@ -623,4 +776,30 @@ Tree_node* LangGetInput(Language* language, size_t* number_token, Tree_status* s
     }
 
     return NULL;
+}
+
+Tree_node* LangGetCallFuntion(Language* language, size_t* number_token, Tree_status* status) {
+    assert(language);
+    assert(status);
+
+    Tree_node* cur_token = NULL;
+    ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token); 
+    if (cur_token->type != OPERATOR || cur_token->value.operators != OPERATOR_CALL_FUNCTION)
+        return NULL;
+
+    (*number_token)++;
+    Tree_node* call_node = cur_token;
+
+    Tree_node* name_node = LangGetVariable(language, number_token, status);
+    if (name_node == NULL)
+        return NULL;
+
+    Tree_node* param_node = LangGetParams(language, number_token, status);
+    if (param_node == NULL)
+        return NULL;
+
+    call_node->left_node = name_node;
+    call_node->right_node = param_node;
+
+    return call_node;
 }
