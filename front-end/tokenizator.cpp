@@ -28,23 +28,23 @@ Tree_status Tokenizator(Language* language) {
     Tree_node* tree_node = NULL;
 
     while (str < language->end_buffer) {
-        if ('0' <= *str && *str <= '9') {
+        if ('0' <= *str && *str <= '9')
             tree_node = ReadNumber(&str);
-        }    
 
         else if (('a' <= *str && *str <= 'z') ||
                  ('A' <= *str && *str <= 'Z') ||
-                 (*str == '_'))
-            tree_node = ReadVariable(language, &str);
-        
-        else {
-            tree_node = ReadSigns(language, &str);
+                 (*str == '_')) {
+            tree_node = ReadKeyWords(language, &str);
 
-            if (tree_node == NULL) {
-                fprintf(stderr, "%s: cur pos %s\n", __func__, str);
-                TREE_CHECK_AND_RETURN_ERRORS(UNKNOWN_OPERATOR);
-            }
+            if (tree_node == NULL)
+                tree_node = ReadVariable(language, &str);
         }
+
+        else
+            tree_node = ReadKeyWords(language, &str);
+
+        if (tree_node == NULL)
+            TREE_CHECK_AND_RETURN_ERRORS(UNKNOWN_OPERATOR);
 
         SkipSpaces(&str);
         SkipComments(&str);
@@ -82,13 +82,8 @@ Tree_node* ReadVariable(Language* language, char** str) {
     Tree_node* tree_node = NULL;
 
     (*str)++; // skip first symbol (a-zA-Z_)
-    while (('a' <= **str && **str <= 'z') || ('A' <= **str && **str <= 'Z') || **str == '_' || ('0' <= **str && **str <= '9')) {
+    while (('a' <= **str && **str <= 'z') || ('A' <= **str && **str <= 'Z') || **str == '_' || ('0' <= **str && **str <= '9'))
         (*str)++;
-        SkipSpaces(str);
-    }
-    
-    if (*(*str - 1) == ' ')
-        (*str)--;
 
     char* name_variable = strndup(first_symbol, (size_t)(*str - first_symbol));
     unsigned long hash_variable = hash_djb2(name_variable);
@@ -126,7 +121,7 @@ Tree_node* CheckKeyWords(char* name_variable, unsigned long hash_variable) {
     return NULL;
 }
 
-Tree_node* ReadSigns(Language* language, char** str) {
+Tree_node* ReadKeyWords(Language* language, char** str) {
     assert(language);
     assert(str);
     

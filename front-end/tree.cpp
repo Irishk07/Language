@@ -118,8 +118,8 @@ const char* IndetifySign(Tree_node* tree_node) {
                 case OPERATOR_CH:            return "ch";
                 case OPERATOR_TH:            return "th";
                 case OPERATOR_CTH:           return "cth";
-                case OPERATOR_ASSIGNMENT:    return "=";
-                case OPERATOR_CHANGE:        return ":=";
+                case OPERATOR_ASSIGNMENT:    return ":=";
+                case OPERATOR_CHANGE:        return "=";
                 case OPERATOR_COMMON:        return ";";
                 case OPERATOR_IF:            return "if";
                 case OPERATOR_WHILE:         return "while";
@@ -134,6 +134,7 @@ const char* IndetifySign(Tree_node* tree_node) {
                 case OPERATOR_OPEN_FIGURE:   return "{";
                 case OPERATOR_CLOSE_FIGURE:  return "}";
                 case OPERATOR_FINISH_SYMBOL: return "$";
+                case OPERATOR_MATCH:         return "->";
                 case WRONG_OPERATOR:
                 default: break;
             }
@@ -320,6 +321,9 @@ void PrintNodeToDot(Language* language, FILE *file, Tree_node* tree_node) {
         else if (*sign == '>')
             fprintf(file, "    node_%p [label=\"{'&gt;'}\", fillcolor = \"#ff99ffff\"];\n", 
                          (void *)tree_node);  
+        else if (strcmp(sign, "->") == 0)
+            fprintf(file, "    node_%p [label=\"{'-&gt;'}\", fillcolor = \"#ff99ffff\"];\n", 
+                         (void *)tree_node); 
         else
             fprintf(file, "    node_%p [label=\"{'%s'}\", fillcolor = \"#ff99ffff\"];\n", 
                         (void *)tree_node, sign);

@@ -69,6 +69,7 @@ enum Type_operators {
     OPERATOR_BEFORE        = 32,
     OPERATOR_ABOVE         = 33,
     OPERATOR_EQUAL         = 34,
+    OPERATOR_MATCH         = 35,
     WRONG_OPERATOR
 };
 
@@ -110,9 +111,9 @@ About_function const key_words[] = {
     {.name = ")",      .type = OPERATOR_CLOSE_BRACKET, .hash = hash_djb2(")")},
     {.name = "{",      .type = OPERATOR_OPEN_FIGURE,   .hash = hash_djb2("{")},
     {.name = "}",      .type = OPERATOR_CLOSE_FIGURE,  .hash = hash_djb2("}")},
-    {.name = "=",      .type = OPERATOR_ASSIGNMENT,    .hash = hash_djb2("=")},
+    {.name = ":=",     .type = OPERATOR_ASSIGNMENT,    .hash = hash_djb2(":=")},
     {.name = "$",      .type = OPERATOR_FINISH_SYMBOL, .hash = hash_djb2("$")},
-    {.name = ":=",     .type = OPERATOR_CHANGE,        .hash = hash_djb2(":=")},
+    {.name = "=",      .type = OPERATOR_CHANGE,        .hash = hash_djb2("=")},
     {.name = "<",      .type = OPERATOR_BEFORE,        .hash = hash_djb2("<")},
     {.name = ">",      .type = OPERATOR_ABOVE,         .hash = hash_djb2(">")},
     {.name = "==",     .type = OPERATOR_EQUAL,         .hash = hash_djb2("==")}

@@ -93,6 +93,8 @@ Tree_status ReadPreOrderNode(Language* language, Tree_node** tree_node, char** c
         if (strncmp(*current_pos, "nil", LEN_NIL) == 0) {
             *current_pos += LEN_NIL;
             *tree_node = NULL;
+
+            SkipSpaces(current_pos);
         }
 
         else {
@@ -118,6 +120,8 @@ Tree_status ReadPreOrderNode(Language* language, Tree_node** tree_node, char** c
 
             TREE_CHECK_AND_RETURN_ERRORS(ReadPreOrderNode(language, &(*tree_node)->right_node, current_pos));
 
+            SkipSpaces(current_pos);
+
             (*current_pos)++; // ++ because skip ')'
 
             SkipSpaces(current_pos);
@@ -129,6 +133,8 @@ Tree_status ReadPreOrderNode(Language* language, Tree_node** tree_node, char** c
         *current_pos += LEN_NIL;
 
         *tree_node = NULL;
+
+        SkipSpaces(current_pos);
     }
 
     else {
@@ -274,8 +280,8 @@ const char* IndetifySign(Tree_node* tree_node) {
                 case OPERATOR_CH:            return "ch";
                 case OPERATOR_TH:            return "th";
                 case OPERATOR_CTH:           return "cth";
-                case OPERATOR_ASSIGNMENT:    return "=";
-                case OPERATOR_CHANGE:        return ":=";
+                case OPERATOR_ASSIGNMENT:    return ":=";
+                case OPERATOR_CHANGE:        return "=";
                 case OPERATOR_COMMON:        return ";";
                 case OPERATOR_IF:            return "if";
                 case OPERATOR_WHILE:         return "while";
@@ -290,6 +296,7 @@ const char* IndetifySign(Tree_node* tree_node) {
                 case OPERATOR_OPEN_FIGURE:   return "{";
                 case OPERATOR_CLOSE_FIGURE:  return "}";
                 case OPERATOR_FINISH_SYMBOL: return "$";
+                case OPERATOR_MATCH:         return "->";
                 case WRONG_OPERATOR:
                 default: break;
             }

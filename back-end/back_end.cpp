@@ -115,6 +115,7 @@ void CreateAsmFile(Language* language, Tree_node* tree_node, FILE* asm_file) {
             case OPERATOR_OPEN_FIGURE:   
             case OPERATOR_CLOSE_FIGURE:  
             case OPERATOR_FINISH_SYMBOL:
+            case OPERATOR_MATCH:
             case WRONG_OPERATOR:
             default: break; 
         }
