@@ -169,7 +169,7 @@ Status_of_finding ItIsOperator(const char* name, type_t* value) {
     unsigned long hash = hash_djb2(name);
 
     for (size_t i = 0; i < sizeof(key_words) / sizeof(key_words[0]); ++i) {
-        if (hash == key_words[i].hash && strcmp(name, key_words[i].name) == 0) {
+        if (hash == key_words[i].tree_hash && strcmp(name, key_words[i].tree_name) == 0) {
             value->operators = key_words[i].type;
             return FIND_YES;
         }
@@ -297,6 +297,10 @@ const char* IndetifySign(Tree_node* tree_node) {
                 case OPERATOR_CLOSE_FIGURE:  return "}";
                 case OPERATOR_FINISH_SYMBOL: return "$";
                 case OPERATOR_MATCH:         return "->";
+                case OPERATOR_DEF_FUNCTION:  return "func";
+                case OPERATOR_CALL_FUNCTION: return "call";
+                case OPERATOR_RETURN:        return "return";
+                case OPERATOR_PARAM:         return ",";
                 case WRONG_OPERATOR:
                 default: break;
             }

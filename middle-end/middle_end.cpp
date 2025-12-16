@@ -69,24 +69,23 @@ void PrintPreOrderTreeToFile(Language* language, Tree_node* tree_node, FILE* str
     assert(stream);
 
     if (tree_node == NULL) {
-        fprintf(stream, "nil");
+        fprintf(stream, "nil ");
         return;
     }
 
     if (tree_node->type == NUMBER)
-        fprintf(stream, "(%d ", tree_node->value.number);
+        fprintf(stream, "( %d ", tree_node->value.number);
     
     else if (tree_node->type == VARIABLE)
-        fprintf(stream, "(\"%s\" ", NameOfVariable(language, tree_node));
+        fprintf(stream, "( \"%s\" ", NameOfVariable(language, tree_node));
 
     if (tree_node->type == OPERATOR)
-        fprintf(stream, "(%s ", IndetifySign(tree_node));
+        fprintf(stream, "( %s ", IndetifySign(tree_node));
 
     PrintPreOrderTreeToFile(language, tree_node->left_node, stream);
-    fprintf(stream, " ");
 
     PrintPreOrderTreeToFile(language, tree_node->right_node, stream);
-    fprintf(stream, ")");
+    fprintf(stream, ") ");
 }
 
 Tree_status LanguageDtor(Language* language) {

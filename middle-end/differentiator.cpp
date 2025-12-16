@@ -211,6 +211,9 @@ bool IsOneNode(Tree_node* node) {
     return cosh(ans) / sinh(ans);                                   \
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wswitch-enum"
+
 double Calculating(Language* language, Tree_node* tree_node) {
     if (tree_node == NULL)
         return NAN;
@@ -260,23 +263,6 @@ double Calculating(Language* language, Tree_node* tree_node) {
                     return tanh(Calculating(language, tree_node->left_node));
                 case OPERATOR_CTH: 
                     CALCULATING_CTH;
-                case OPERATOR_ASSIGNMENT:
-                case OPERATOR_CHANGE:
-                case OPERATOR_COMMON:
-                case OPERATOR_IF:
-                case OPERATOR_WHILE:
-                case OPERATOR_ELSE:
-                case OPERATOR_INPUT:
-                case OPERATOR_PRINT:
-                case OPERATOR_ABOVE:
-                case OPERATOR_BEFORE:
-                case OPERATOR_EQUAL:
-                case OPERATOR_OPEN_BRACKET:
-                case OPERATOR_CLOSE_BRACKET:
-                case OPERATOR_OPEN_FIGURE:
-                case OPERATOR_CLOSE_FIGURE:
-                case OPERATOR_FINISH_SYMBOL:
-                case OPERATOR_MATCH:
                 case WRONG_OPERATOR:
                 default: break;
             }
@@ -286,3 +272,5 @@ double Calculating(Language* language, Tree_node* tree_node) {
 
     return NAN;
 }
+
+#pragma GCC diagnostic pop
