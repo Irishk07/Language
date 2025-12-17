@@ -29,31 +29,23 @@ Tree_status LanguageCtor(Language* language, const char* file_with_tree,
     language->cnt_labels.cnt_while = 0;
     language->cnt_labels.cnt_else  = 0;
 
-    language->array_with_variables = {};
-    ArrayCtor(&(language->array_with_variables), sizeof(About_variable), DEFAULT_START_CAPACITY);
-
     return SUCCESS;
-}
-
-void FillIndexesArrayWithVariables(Language* language) {
-    assert(language);
-
-    for (size_t i = 0; i < language->array_with_variables.size; ++i) {
-        About_variable about_variable = {.name = NameOfVariableFromIndex(&language->array_with_variables, i), .value = (int)i};
-
-        ArrayChangeElement(&(language->array_with_variables), &about_variable, i);
-    }
 }
 
 Tree_status BackEnd(Language* language, const char* name_asm_file) {
     assert(language);
 
     ReadPreOrderTreeFile(language);
-    FillIndexesArrayWithVariables(language);
 
     FILE* asm_file = fopen(name_asm_file, "w");
     if (asm_file == NULL)
         TREE_CHECK_AND_RETURN_ERRORS(OPEN_ERROR);
+
+    fprintf(asm_file, "PUSH 0\n"
+                      "POP RAX\n"
+                      "CALL :main\n");
+
+    fprintf(stderr, "%s: HERE\n", __func__);
 
     CreateAsmFile(language, language->tree.root, asm_file);
 
@@ -69,14 +61,25 @@ void CreateAsmFile(Language* language, Tree_node* tree_node, FILE* asm_file) {
     assert(language);
     assert(asm_file);
 
+    fprintf(stderr, "%s: HERE\n", __func__);
+
     if (tree_node == NULL)
         return;
 
-    if (tree_node->type == NUMBER)
+    if (tree_node->type == NUMBER) {
+        fprintf(stderr, "Number: HERE\n");
         fprintf(asm_file, "PUSH %d\n", tree_node->value.number);
-
-    if (tree_node->type == VARIABLE)
-        fprintf(asm_file, "PUSH [%d]\n", ValueOfVariable(tree_node));
+    }
+    if (tree_node->type == VARIABLE) {
+        fprintf(stderr, "Variable: HERE\n");
+        fprintf(asm_file, "POP RBX\n"
+                          "PUSH RBX\n"
+                          "PUSH RBX\n"
+                          "PUSH %d\n" 
+                          "ADD\n"
+                          "POP RBX\n"
+                          "PUSH [RBX]\n", ValueOfVariable(tree_node));
+    }                     
 
     if (tree_node->type == OPERATOR) {
         switch(tree_node->value.operators) {
@@ -99,20 +102,21 @@ void CreateAsmFile(Language* language, Tree_node* tree_node, FILE* asm_file) {
             case OPERATOR_CH:     PrintMathFunction(language, tree_node, asm_file, "CH");     break;
             case OPERATOR_TH:     PrintMathFunction(language, tree_node, asm_file, "TH");     break;
             case OPERATOR_CTH:    PrintMathFunction(language, tree_node, asm_file, "CTH");    break;
-            case OPERATOR_ASSIGNMENT:  
-            case OPERATOR_CHANGE: PrintAssignment(language, tree_node, asm_file);             break;
+            case OPERATOR_ASSIGNMENT: PrintAssignment(language, tree_node, asm_file);         break;
+            case OPERATOR_CHANGE: PrintChange(language, tree_node, asm_file);                 break;
             case OPERATOR_IF:     PrintIf(language, tree_node, asm_file);                     break;
             case OPERATOR_ELSE:   break;
             case OPERATOR_WHILE:  PrintWhile(language, tree_node, asm_file);                  break;
             case OPERATOR_COMMON:
-            case OPERATOR_PARAM:  CreateAsmFile(language, tree_node->left_node, asm_file);
+            case OPERATOR_PARAM:  fprintf(stderr, "COMMON: HERE\n");
+                                  CreateAsmFile(language, tree_node->left_node, asm_file);
                                   CreateAsmFile(language, tree_node->right_node, asm_file);   break;
             case OPERATOR_INPUT:  fprintf(asm_file, "IN\n");                                  break;
             case OPERATOR_PRINT:  PrintOut(language, tree_node, asm_file);                    break;
-            case OPERATOR_MAIN_FUNCTION:
-            case OPERATOR_DEF_FUNCTION:
-            case OPERATOR_CALL_FUNCTION:
-            case OPERATOR_RETURN:
+            case OPERATOR_MAIN_FUNCTION: PrintMainFunction(language, tree_node, asm_file);    break;
+            case OPERATOR_DEF_FUNCTION: PrintDefFunction(language, tree_node, asm_file);      break;
+            case OPERATOR_CALL_FUNCTION: PrintCallFunction(language, tree_node, asm_file);    break;
+            case OPERATOR_RETURN: PrintReturnFunction(language, tree_node, asm_file);         break;
             case OPERATOR_ABOVE:
             case OPERATOR_BEFORE:
             case OPERATOR_EQUAL: 
@@ -154,14 +158,31 @@ void PrintAssignment(Language* language, Tree_node* tree_node, FILE* asm_file) {
     assert(asm_file);
     assert(tree_node);
 
+    fprintf(stderr, "%s: HERE\n", __func__);
+
     CreateAsmFile(language, tree_node->right_node, asm_file);
-    fprintf(asm_file, "POP [%d]\n", ValueOfVariable(tree_node->left_node));
+    
+    Tree_node* name_node = tree_node->left_node;
+
+    About_variable about_variable = {.name = NameOfVariable(name_node), .value = language->array_with_variables.size};
+    ArrayPush(&language->array_with_variables, &about_variable);
+}
+
+void PrintChange(Language* language, Tree_node* tree_node, FILE* asm_file) {
+    assert(language);
+    assert(asm_file);
+    assert(tree_node);
+
+    CreateAsmFile(language, tree_node->right_node, asm_file);
+    CreateAsmFile(language, tree_node->left_node, asm_file);
 }
 
 void PrintIf(Language* language, Tree_node* tree_node, FILE* asm_file) {
     assert(language);
     assert(asm_file);
     assert(tree_node);
+
+    fprintf(stderr, "%s: HERE\n", __func__);
 
     Tree_node* condition = tree_node->left_node;
 
@@ -237,23 +258,114 @@ void PrintOut(Language* language, Tree_node* tree_node, FILE* asm_file) {
     assert(tree_node);
     assert(asm_file);
 
+    fprintf(stderr, "%s: HERE\n", __func__);
+
     CreateAsmFile(language, tree_node->left_node, asm_file);
 
     fprintf(asm_file, "OUT\n");
 }
 
-// void PrintDefFunction(Language* language, Tree_node* tree_node, FILE* asm_file) {
-//     assert(language);
-//     assert(tree_node);
-//     assert(asm_file);
+void PrintMainFunction(Language* language, Tree_node* tree_node, FILE* asm_file) {
+    assert(language);
+    assert(tree_node);
+    assert(asm_file);
 
-//     Tree_node* common_node = tree_node->left_node;
-//     Tree_node* name_node = common_node->left_node;
+    fprintf(stderr, "%s: HERE\n", __func__);
 
-//     fprintf(asm_file, ":%s\n", NameOfVariable(&language->array_with_variables, name_node));
+    language->array_with_variables = {};
+    ArrayCtor(&(language->array_with_variables), sizeof(About_variable), DEFAULT_START_CAPACITY);
 
-    
-// }
+    fprintf(asm_file, ":main\n");
+
+    CreateAsmFile(language, tree_node->right_node, asm_file);
+
+    free(language->array_with_variables.data);
+}
+
+void PrintDefFunction(Language* language, Tree_node* tree_node, FILE* asm_file) {
+    assert(language);
+    assert(tree_node);
+    assert(asm_file);
+
+    fprintf(stderr, "%s: HERE\n", __func__);
+
+    Tree_node* common_node = tree_node->left_node;
+    Tree_node* name_node = common_node->left_node;
+
+    language->array_with_variables = {};
+    ArrayCtor(&(language->array_with_variables), sizeof(About_variable), DEFAULT_START_CAPACITY);
+
+    fprintf(asm_file, ":%s\n", NameOfVariable(name_node));
+
+    int cnt_params = 0;
+    common_node = common_node->right_node;
+    while (common_node != NULL 
+           && common_node->type == OPERATOR && common_node->value.operators == OPERATOR_PARAM) {
+        About_variable about_variable = {.name = NameOfVariable(common_node->left_node), .value = cnt_params};
+        ArrayPush(&language->array_with_variables, &about_variable);
+
+        common_node = common_node->right_node;
+        cnt_params++;
+    }
+    if (common_node != NULL) {
+        About_variable about_variable = {.name = NameOfVariable(common_node->right_node), .value = cnt_params};
+        ArrayPush(&language->array_with_variables, &about_variable);
+        cnt_params++;
+    }
+
+    for (int i = language->array_with_variables.size - 1; i >= 0; ++i) {
+        fprintf(asm_file, "PUSH RAX\n"
+                          "PUSH %d\n" 
+                          "ADD\n"
+                          "POP RBX\n"
+                          "POP [RBX]\n", i);
+    }
+
+    fprintf(asm_file, "PUSH RAX\n"
+                      "PUSH %d\n"
+                      "ADD\n"
+                      "POP RAX\n", cnt_params);
+
+    CreateAsmFile(language, tree_node->right_node, asm_file);
+
+    free(language->array_with_variables.data);
+}
+
+void PrintCallFunction(Language* language, Tree_node* tree_node, FILE* asm_file) {
+    assert(language);
+    assert(tree_node);
+    assert(asm_file);
+
+    fprintf(stderr, "%s: HERE\n", __func__);
+
+    fprintf(asm_file, "PUSH RAX\n");
+
+    Tree_node* param_node = tree_node->right_node;
+
+    while (param_node != NULL 
+           && param_node->type == OPERATOR && param_node->value.operators == OPERATOR_PARAM) {
+        fprintf(stderr, "%s: WHILE START: HERE\n", __func__);
+        fprintf(asm_file, "PUSH %d\n", ValueOfVariable(param_node->left_node));
+        param_node = param_node->right_node;
+        fprintf(stderr, "%s: WHILE END: HERE\n", __func__);
+    }
+    if (param_node != NULL)
+        fprintf(asm_file, "PUSH %d\n", ValueOfVariable(param_node->right_node));
+
+    Tree_node* name_node = tree_node->left_node;
+    fprintf(asm_file, "CALL :%s\n", NameOfVariable(name_node));
+}
+
+void PrintReturnFunction(Language* language, Tree_node* tree_node, FILE* asm_file) {
+    assert(language);
+    assert(tree_node);
+    assert(asm_file);
+
+    fprintf(stderr, "%s: HERE\n", __func__);
+
+    CreateAsmFile(language, tree_node->left_node, asm_file);
+    fprintf(asm_file, "RET\n");
+}
 
 Tree_status ReadPreOrderTreeFile(Language* language) {
     assert(language);
@@ -350,7 +462,6 @@ Tree_status ReadPreOrderNode(Language* language, Tree_node** tree_node, char** c
 
 Tree_status LanguageDtor(Language* language) {
     LanguageNodeDtor(language, language->tree.root);
-    free(language->array_with_variables.data);
 
     return SUCCESS;
 }
@@ -371,4 +482,14 @@ void LanguageNodeDtor(Language* language, Tree_node* tree_node) {
     tree_node->right_node = NULL;
 
     free(tree_node);
+}
+
+void ArrayDtorVariables(Array_with_data* array_with_data) {
+    for (size_t i = 0; i < array_with_data->size; ++i) {
+        About_variable* about_variable = NULL;
+        ArrayGetElement(array_with_data, &about_variable, i);
+        free(about_variable);
+
+    }    
+    free(array_with_data->data);
 }

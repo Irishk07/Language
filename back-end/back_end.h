@@ -36,6 +36,8 @@ void PrintMathFunction(Language* language, Tree_node* tree_node, FILE* asm_file,
 
 void PrintAssignment(Language* language, Tree_node* tree_node, FILE* asm_file);
 
+void PrintChange(Language* language, Tree_node* tree_node, FILE* asm_file);
+
 void PrintIf(Language* language, Tree_node* tree_node, FILE* asm_file);
 
 void PrintElse(Language* language, Tree_node* tree_node, FILE* asm_file);
@@ -44,6 +46,14 @@ void PrintWhile(Language* language, Tree_node* tree_node, FILE* asm_file);
 
 void PrintOut(Language* language, Tree_node* tree_node, FILE* asm_file);
 
+void PrintMainFunction(Language* language, Tree_node* tree_node, FILE* asm_file);
+
+void PrintDefFunction(Language* language, Tree_node* tree_node, FILE* asm_file);
+
+void PrintCallFunction(Language* language, Tree_node* tree_node, FILE* asm_file);
+
+void PrintReturnFunction(Language* language, Tree_node* tree_node, FILE* asm_file);
+
 Tree_status ReadPreOrderTreeFile(Language* language);
 
 Tree_status ReadPreOrderNode(Language* language, Tree_node** tree_node, char** current_pos);
@@ -51,6 +61,8 @@ Tree_status ReadPreOrderNode(Language* language, Tree_node** tree_node, char** c
 Tree_status LanguageDtor(Language* language);
 
 void LanguageNodeDtor(Language* language, Tree_node* tree_node);
+
+void ArrayDtorVariables(Array_with_data* array_with_data);
 
 
 #endif // BACK_END_H_

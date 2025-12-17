@@ -164,7 +164,7 @@ Tree_node* LangGetParams(Language* language, size_t* number_token, Tree_status* 
     if (variable_node == NULL)
         return NULL;
 
-    Tree_node* param_node = NodeCtor(OPERATOR, (type_t){.operators = OPERATOR_PARAM}, NULL, variable_node);
+    Tree_node* param_node = NodeCtor(OPERATOR, (type_t){.operators = OPERATOR_PARAM}, variable_node, NULL);
 
     ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token);
     while (cur_token->type != OPERATOR || cur_token->value.operators != OPERATOR_CLOSE_BRACKET) { // wait )
@@ -175,8 +175,8 @@ Tree_node* LangGetParams(Language* language, size_t* number_token, Tree_status* 
             if (variable_node == NULL)
                 return NULL;
 
-            cur_token->left_node   = param_node->right_node;
-            cur_token->right_node  = variable_node;
+            cur_token->left_node   = variable_node;
+            cur_token->right_node  = param_node->right_node;
             param_node->right_node = cur_token;
 
             ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token);
@@ -185,6 +185,8 @@ Tree_node* LangGetParams(Language* language, size_t* number_token, Tree_status* 
 
     (*number_token)++;
     free(cur_token); // here )
+
+    fprintf(stderr, "HERE\n")
 
     return param_node;
 }
@@ -249,7 +251,7 @@ Tree_node* LangGetReturn(Language* language, size_t* number_token, Tree_status* 
     ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token);
     if (cur_token->type == OPERATOR && cur_token->value.operators == OPERATOR_COMMON) {
         (*number_token)++;
-        cur_token->left_node = return_node;
+        cur_token->right_node = return_node;
     }     
 
     return cur_token;
