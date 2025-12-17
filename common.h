@@ -13,10 +13,6 @@
             }                                                             \
         }
 
-#define DUMP_CURRENT_SITUATION(node)                              \
-{                                                                 \
-        TreeHTMLDump(language, node, DUMP_INFO, NOT_ERROR_DUMP);  \
-}
 
 #define DUMP_INFO __LINE__, __FILE__
 #define NOT_ERROR_DUMP USUAL_DUMP, SUCCESS
@@ -142,9 +138,21 @@ About_function const key_words[] = {
 #undef KEY_WORD
 
 
+struct About_variable {
+    const char* name;
+    int value;
+};
+
+struct Array_with_data {
+    void* data = NULL;
+    size_t size = 0;
+    size_t capacity = 0;
+    size_t elem_size;
+};
+
 union type_t {
     int number;
-    int index_variable;
+    About_variable* about_variable;
     Type_operators operators;
 };
 
@@ -194,18 +202,32 @@ struct About_tree {
     Tree* tree;
     double value;
 };
- 
-struct About_variable {
-    char* name;
-    int value;
-};
 
-struct Array_with_data {
-    void* data = NULL;
-    size_t size = 0;
-    size_t capacity = 0;
-    size_t elem_size;
-};
+
+
+char* ReadAnswer();
+
+int ValueOfVariable(Tree_node* tree_node);
+
+int ValueOfVariableFromIndex(Array_with_data* array_with_variables, size_t index);
+
+const char* NameOfVariable(Tree_node* tree_node);
+
+const char* NameOfVariableFromIndex(Array_with_data* array_with_variables, size_t index);
+
+const char* IndetifySign(Tree_node* tree_node);
+
+void SkipSpaces(char** buffer);
+
+void SkipComments(char** buffer);
+
+Type_node FindOutType(const char* name, type_t* value);
+
+Status_of_finding ItIsOperator(const char* name, type_t* value);
+
+Status_of_finding ItIsNumber(const char* name, type_t* value);
+
+Status_of_finding ItIsVariable(const char* name, type_t* value);
 
 
 #endif // COMMON_H_

@@ -4,12 +4,12 @@
 #include <string.h>
 #include <sys/stat.h>
 
-#include "array.h"
+#include "../array.h"
 #include "../common.h"
 #include "front_end.h"
 #include "onegin.h"
 #include "syntax_analize.h"
-#include "tree.h"
+#include "../tree.h"
 
 
 // +|||++++++++++++ //
@@ -75,7 +75,7 @@ Tree_node* LangGetComandir(Language* language, Tree_status* status) {
         else
             result_node = NodeCtor(OPERATOR, (type_t){.operators = OPERATOR_COMMON}, result_node, cur_node);
 
-        TreeHTMLDump(language, result_node, DUMP_INFO, NOT_ERROR_DUMP);
+        TreeHTMLDump(&language->dump_info, &language->array_with_variables, result_node, DUMP_INFO, NOT_ERROR_DUMP);
     }
     while (number_token < language->array_with_tokens.size);
 
@@ -465,8 +465,8 @@ Tree_node* CheckEqualAssignmentOrChange(Language* language, size_t* number_token
     Tree_node* first_node = LangGetAssignmentOrChange(language, number_token, status);
     Tree_node* second_node = LangGetAssignmentOrChange(language, number_token, status);
 
-    TreeHTMLDump(language, first_node, DUMP_INFO, NOT_ERROR_DUMP);
-    TreeHTMLDump(language, second_node, DUMP_INFO, NOT_ERROR_DUMP);
+    DUMP_CURRENT_SITUATION(first_node);
+    DUMP_CURRENT_SITUATION(second_node);
 
     if (CompareTrees(first_node, second_node) != EQUAL) {
         LanguageNodeDtor(language, first_node);
@@ -496,7 +496,7 @@ Status_of_comparing CompareTrees(Tree_node* tree_node_1, Tree_node* tree_node_2)
             return DIFFERENT;
     }
     else if (type_node == VARIABLE) {
-        if (tree_node_1->value.index_variable != tree_node_2->value.index_variable)
+        if (strcmp(NameOfVariable(tree_node_1), NameOfVariable(tree_node_2)) != 0)
             return DIFFERENT;
     } 
     else if (type_node == OPERATOR) {

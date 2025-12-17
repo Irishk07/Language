@@ -19,6 +19,10 @@ Tree_status LanguageCtor(Language* language, const char* html_dump_filename, con
 
 Tree_status Middle_end(Language* language);
 
+Tree_status ReadPreOrderTreeFile(Language* language);
+
+Tree_status ReadPreOrderNode(Language* language, Tree_node** tree_node, char** current_pos);
+
 Tree_status CreatePreOrderTreeFile(Language* language);
 
 void PrintPreOrderTreeToFile(Language* language, Tree_node* tree_node, FILE* stream);

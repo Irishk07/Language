@@ -5,9 +5,10 @@
 
 #include "back_end.h"
 
-#include "array.h"
+#include "../array.h"
 #include "../common.h"
-#include "tree.h"
+#include "onegin.h"
+#include "../tree.h"
 
 
 Tree_status LanguageCtor(Language* language, const char* file_with_tree,
@@ -38,7 +39,7 @@ void FillIndexesArrayWithVariables(Language* language) {
     assert(language);
 
     for (size_t i = 0; i < language->array_with_variables.size; ++i) {
-        About_variable about_variable = {.name = NameOfVariableFromIndex(language, i), .value = (int)(i + 1)};
+        About_variable about_variable = {.name = NameOfVariableFromIndex(&language->array_with_variables, i), .value = (int)i};
 
         ArrayChangeElement(&(language->array_with_variables), &about_variable, i);
     }
@@ -75,7 +76,7 @@ void CreateAsmFile(Language* language, Tree_node* tree_node, FILE* asm_file) {
         fprintf(asm_file, "PUSH %d\n", tree_node->value.number);
 
     if (tree_node->type == VARIABLE)
-        fprintf(asm_file, "PUSH [%d]\n", ValueOfVariable(language, tree_node));
+        fprintf(asm_file, "PUSH [%d]\n", ValueOfVariable(tree_node));
 
     if (tree_node->type == OPERATOR) {
         switch(tree_node->value.operators) {
@@ -103,10 +104,15 @@ void CreateAsmFile(Language* language, Tree_node* tree_node, FILE* asm_file) {
             case OPERATOR_IF:     PrintIf(language, tree_node, asm_file);                     break;
             case OPERATOR_ELSE:   break;
             case OPERATOR_WHILE:  PrintWhile(language, tree_node, asm_file);                  break;
-            case OPERATOR_COMMON: CreateAsmFile(language, tree_node->left_node, asm_file);
+            case OPERATOR_COMMON:
+            case OPERATOR_PARAM:  CreateAsmFile(language, tree_node->left_node, asm_file);
                                   CreateAsmFile(language, tree_node->right_node, asm_file);   break;
             case OPERATOR_INPUT:  fprintf(asm_file, "IN\n");                                  break;
             case OPERATOR_PRINT:  PrintOut(language, tree_node, asm_file);                    break;
+            case OPERATOR_MAIN_FUNCTION:
+            case OPERATOR_DEF_FUNCTION:
+            case OPERATOR_CALL_FUNCTION:
+            case OPERATOR_RETURN:
             case OPERATOR_ABOVE:
             case OPERATOR_BEFORE:
             case OPERATOR_EQUAL: 
@@ -149,7 +155,7 @@ void PrintAssignment(Language* language, Tree_node* tree_node, FILE* asm_file) {
     assert(tree_node);
 
     CreateAsmFile(language, tree_node->right_node, asm_file);
-    fprintf(asm_file, "POP [%d]\n", ValueOfVariable(language, tree_node->left_node));
+    fprintf(asm_file, "POP [%d]\n", ValueOfVariable(tree_node->left_node));
 }
 
 void PrintIf(Language* language, Tree_node* tree_node, FILE* asm_file) {
@@ -236,11 +242,115 @@ void PrintOut(Language* language, Tree_node* tree_node, FILE* asm_file) {
     fprintf(asm_file, "OUT\n");
 }
 
-Tree_status LanguageDtor(Language* language) {
-    ArrayDtorVariables(language, &language->array_with_variables);
-    free(language->array_with_variables.data);
+// void PrintDefFunction(Language* language, Tree_node* tree_node, FILE* asm_file) {
+//     assert(language);
+//     assert(tree_node);
+//     assert(asm_file);
 
+//     Tree_node* common_node = tree_node->left_node;
+//     Tree_node* name_node = common_node->left_node;
+
+//     fprintf(asm_file, ":%s\n", NameOfVariable(&language->array_with_variables, name_node));
+
+    
+// }
+
+Tree_status ReadPreOrderTreeFile(Language* language) {
+    assert(language);
+
+    TREE_CHECK_AND_RETURN_ERRORS(ReadOnegin(language, language->tree_file));
+
+    char* begin_buffer = language->begin_buffer;
+
+    TREE_CHECK_AND_RETURN_ERRORS(ReadPreOrderNode(language, &language->tree.root, &begin_buffer));
+
+    DUMP_CURRENT_SITUATION(language->tree.root);
+
+    free(language->begin_buffer);
+    language->begin_buffer = NULL;
+    language->end_buffer   = NULL;
+    language->size_buffer  = 0;
+
+    return SUCCESS;
+}
+
+Tree_status ReadPreOrderNode(Language* language, Tree_node** tree_node, char** current_pos) {    
+    assert(language);
+    assert(tree_node);
+    assert(current_pos);
+    assert(*current_pos);
+
+    SkipSpaces(current_pos);
+
+    if (*current_pos > language->end_buffer)
+        TREE_CHECK_AND_RETURN_ERRORS(BUFFER_OVERFLOW);
+
+    if (**current_pos == '(') {
+        (*current_pos)++;
+        SkipSpaces(current_pos);
+
+        if (strncmp(*current_pos, "nil", LEN_NIL) == 0) {
+            *current_pos += LEN_NIL;
+            *tree_node = NULL;
+
+            SkipSpaces(current_pos);
+        }
+
+        else {
+            if (**current_pos == '\"') // open_"
+                (*current_pos)++;
+
+            int read_bytes = 0;
+            sscanf(*current_pos, "%*s%n", &read_bytes);
+
+            if (*(*current_pos + read_bytes - 1) == '\"')
+                *(*current_pos + read_bytes - 1) = '\0'; // close_" -> '\0'
+            
+            char* name = strndup(*current_pos, (size_t)read_bytes);
+            type_t value = {.number = 0};
+
+            Type_node type = FindOutType(name, &value);
+
+            if (type != VARIABLE)
+                free(name);
+
+            *tree_node = NodeCtor(type, value, NULL, NULL);
+
+            *current_pos += read_bytes;
+
+            SkipSpaces(current_pos);
+
+            TREE_CHECK_AND_RETURN_ERRORS(ReadPreOrderNode(language, &(*tree_node)->left_node, current_pos));
+
+            TREE_CHECK_AND_RETURN_ERRORS(ReadPreOrderNode(language, &(*tree_node)->right_node, current_pos));
+
+            SkipSpaces(current_pos);
+
+            (*current_pos)++; // ++ because skip ')'
+
+            SkipSpaces(current_pos);
+        }
+    }
+
+    else if (strncmp(*current_pos, "nil", LEN_NIL) == 0) {
+        *current_pos += LEN_NIL;
+
+        *tree_node = NULL;
+
+        SkipSpaces(current_pos);
+    }
+
+    else {
+        fprintf(stderr, "%s\n", *current_pos);
+        TREE_CHECK_AND_RETURN_ERRORS(SYNTAX_ERROR);
+    }
+
+    return SUCCESS;
+}
+
+Tree_status LanguageDtor(Language* language) {
     LanguageNodeDtor(language, language->tree.root);
+    free(language->array_with_variables.data);
 
     return SUCCESS;
 }
@@ -252,13 +362,13 @@ void LanguageNodeDtor(Language* language, Tree_node* tree_node) {
     LanguageNodeDtor(language, tree_node->left_node);
     LanguageNodeDtor(language, tree_node->right_node);
 
+    if (tree_node->type == VARIABLE) {
+        free((void*)NameOfVariable(tree_node));
+        free(tree_node->value.about_variable);
+    }
+
     tree_node->left_node = NULL;
     tree_node->right_node = NULL;
 
     free(tree_node);
-}
-
-void ArrayDtorVariables(Language* language, Array_with_data* array_with_data) {
-    for (size_t i = 0; i < array_with_data->size; ++i)
-        free(NameOfVariableFromIndex(language, i));
 }

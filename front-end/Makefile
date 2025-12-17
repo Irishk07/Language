@@ -15,11 +15,13 @@ null,object-size,return,returns-nonnull-attribute,shift,signed-integer-overflow,
 
 CPPFLAGS += $(SANITIZER_FLAGS)
 
-CPPSRC := main.cpp array.cpp front_end.cpp onegin.cpp string_functions.cpp syntax_analize.cpp tokenizator.cpp tree.cpp
+CPPSRC := main.cpp front_end.cpp onegin.cpp syntax_analize.cpp tokenizator.cpp
+CPPSRC_COMMON := ../array.cpp ../common.cpp ../string_functions.cpp ../tree.cpp
 
 CPPOBJ := $(CPPSRC:%.cpp=build/%.o) 
+CPPOBJ_COMMON := $(CPPSRC_COMMON:../%.cpp=build/%.o)
 
-HEADER_DEPENDS := $(CPPOBJ:%.o=%.d)
+HEADER_DEPENDS := $(CPPOBJ:%.o=%.d) $(CPPOBJ_COMMON:%.o=%.d)
 
 .PHONY: all
 all: front_end_prog
@@ -27,7 +29,10 @@ all: front_end_prog
 $(CPPOBJ): build/%.o: %.cpp
 	@$(CXX) $(CPPFLAGS) -MP -MMD -c $< -o $@
 
-front_end_prog: $(CPPOBJ)
+$(CPPOBJ_COMMON): build/%.o: ../%.cpp
+	@$(CXX) $(CPPFLAGS) -MP -MMD -c $< -o $@
+
+front_end_prog: $(CPPOBJ) $(CPPOBJ_COMMON)
 	@$(CXX) $^ -o $@ $(CPPFLAGS)
 
 -include $(HEADER_DEPENDS)

@@ -4,17 +4,17 @@
 
 #include "tokenizator.h"
 
-#include "array.h"
+#include "../array.h"
 #include "../common.h"
 #include "front_end.h"
 #include "onegin.h"
-#include "tree.h"
+#include "../tree.h"
 
 
 #define NODE_NUMBER_CTOR(num)                                         \
     NodeCtor(NUMBER, (type_t){.number = num}, NULL, NULL)
-#define NODE_VARIABLE_CTOR(index)                                     \
-    NodeCtor(VARIABLE, (type_t){.index_variable = index}, NULL, NULL)
+#define NODE_VARIABLE_CTOR(about_var)                                 \
+    NodeCtor(VARIABLE, (type_t){.about_variable = about_var}, NULL, NULL)
 #define NODE_OPERATOR_CTOR(op)                                        \
     NodeCtor(OPERATOR, (type_t){.operators = op}, NULL, NULL)
 
@@ -22,7 +22,7 @@
 Tree_status Tokenizator(Language* language) {
     assert(language);
 
-    ReadOnegin(language, language->programm_file); // TODO: remove text buffer from struct
+    ReadOnegin(language, language->programm_file);
     char* str = language->begin_buffer;
 
     Tree_node* tree_node = NULL;
@@ -95,19 +95,13 @@ Tree_node* ReadVariable(Language* language, char** str) {
         return tree_node;
     }
 
-    for (size_t i = 0; i < language->array_with_variables.size; ++i) {
-        if (strcmp(name_variable, NameOfVariableFromIndex(language, i)) == 0) {
-            free(name_variable);
+    About_variable* about_variable = (About_variable*)calloc(1, sizeof(About_variable));
+    about_variable->name  = name_variable;
+    about_variable->value = DEFAULT_VALUE;
 
-            return NODE_VARIABLE_CTOR((int)i);
-        }
-    }
+    // fprintf(stderr, "%p: %s\n", about_variable, name_variable);
 
-    About_variable about_variable = {.name = name_variable, .value = DEFAULT_VALUE};
-
-    ArrayPush(&(language->array_with_variables), &about_variable);
-
-    return NODE_VARIABLE_CTOR((int)(language->array_with_variables.size - 1));
+    return NODE_VARIABLE_CTOR(about_variable);
 }
 
 Tree_node* CheckKeyWords(char* name_variable, unsigned long hash_variable) {

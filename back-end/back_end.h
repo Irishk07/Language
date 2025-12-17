@@ -44,11 +44,13 @@ void PrintWhile(Language* language, Tree_node* tree_node, FILE* asm_file);
 
 void PrintOut(Language* language, Tree_node* tree_node, FILE* asm_file);
 
+Tree_status ReadPreOrderTreeFile(Language* language);
+
+Tree_status ReadPreOrderNode(Language* language, Tree_node** tree_node, char** current_pos);
+
 Tree_status LanguageDtor(Language* language);
 
 void LanguageNodeDtor(Language* language, Tree_node* tree_node);
-
-void ArrayDtorVariables(Language* language, Array_with_data* array_with_data);
 
 
 #endif // BACK_END_H_

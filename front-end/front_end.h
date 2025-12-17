@@ -30,6 +30,7 @@ void LanguageNodeDtor(Language* language, Tree_node* tree_node);
 
 void ArrayDtorVariables(Language* language, Array_with_data* array_with_data);
 
+Tree_status TreeHTMLDumpArrayTokens(Language* language, size_t number_token, int line, const char* file);
 
 
 #endif // FRONT_END_H_

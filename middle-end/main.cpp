@@ -1,9 +1,9 @@
 #include <stdlib.h>
 
-#include "array.h"
+#include "../array.h"
 #include "../common.h"
 #include "middle_end.h"
-#include "tree.h"
+#include "../tree.h"
 
 
 int main(int argc, char** argv) {
@@ -24,7 +24,7 @@ int main(int argc, char** argv) {
 
     Middle_end(&language);
 
-    TreeHTMLDump(&language, language.tree.root, DUMP_INFO, NOT_ERROR_DUMP);
+    TreeHTMLDump(&language.dump_info, &language.array_with_variables, language.tree.root, DUMP_INFO, NOT_ERROR_DUMP);
 
     LanguageDtor(&language);
 

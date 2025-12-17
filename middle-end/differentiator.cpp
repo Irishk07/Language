@@ -5,7 +5,7 @@
 
 #include "../common.h"
 #include "middle_end.h"
-#include "tree.h"
+#include "../tree.h"
 
 
 #define NUMBER_NODE_CTOR(num) NodeCtor(NUMBER, (type_t){.number = num}, NULL, NULL)
@@ -222,7 +222,7 @@ double Calculating(Language* language, Tree_node* tree_node) {
         case NUMBER:
             return tree_node->value.number; break;
         case VARIABLE:
-            return ValueOfVariable(language, tree_node); break;
+            return ValueOfVariable(tree_node); break;
         case OPERATOR:
             switch (tree_node->value.operators) {
                 case OPERATOR_ADD:
