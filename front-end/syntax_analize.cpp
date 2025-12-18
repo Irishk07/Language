@@ -137,7 +137,7 @@ Tree_node* LangGetDefinitionFunction(Language* language, size_t* number_token, T
     Tree_node* param_node = LangGetParams(language, number_token, status);
     if (param_node == NULL)
         return NULL;
-    param_node->left_node = name_node;
+    param_node = NodeCtor(OPERATOR, (type_t){.operators = OPERATOR_PARAM}, name_node, param_node);
     func_node->left_node = param_node;
 
     Tree_node* body_node = LangGetFunctionBody(language, number_token, status);
@@ -185,8 +185,6 @@ Tree_node* LangGetParams(Language* language, size_t* number_token, Tree_status* 
 
     (*number_token)++;
     free(cur_token); // here )
-
-    fprintf(stderr, "HERE\n")
 
     return param_node;
 }

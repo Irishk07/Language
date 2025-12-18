@@ -49,7 +49,8 @@ Tree_status BackEnd(Language* language, const char* name_asm_file) {
 
     CreateAsmFile(language, language->tree.root, asm_file);
 
-    fprintf(asm_file, "HLT\n");
+    fprintf(asm_file, ":end\n" 
+                       "HLT\n");
 
     if (fclose(asm_file) == EOF)
         TREE_CHECK_AND_RETURN_ERRORS(CLOSE_ERROR);
@@ -71,14 +72,16 @@ void CreateAsmFile(Language* language, Tree_node* tree_node, FILE* asm_file) {
         fprintf(asm_file, "PUSH %d\n", tree_node->value.number);
     }
     if (tree_node->type == VARIABLE) {
+        for (int i = 0; i < language->array_with_variables.size; ++i) {
+            fprintf(asm_file, "POP RBX\n"
+                              "PUSH RBX\n"
+                              "PUSH RBX\n"
+                              "PUSH %d\n" 
+                              "ADD\n"
+                              "POP RBX\n"
+                              "PUSH [RBX]\n", i);
+        }
         fprintf(stderr, "Variable: HERE\n");
-        fprintf(asm_file, "POP RBX\n"
-                          "PUSH RBX\n"
-                          "PUSH RBX\n"
-                          "PUSH %d\n" 
-                          "ADD\n"
-                          "POP RBX\n"
-                          "PUSH [RBX]\n", ValueOfVariable(tree_node));
     }                     
 
     if (tree_node->type == OPERATOR) {
@@ -165,7 +168,13 @@ void PrintAssignment(Language* language, Tree_node* tree_node, FILE* asm_file) {
     Tree_node* name_node = tree_node->left_node;
 
     About_variable about_variable = {.name = NameOfVariable(name_node), .value = language->array_with_variables.size};
+    fprintf(asm_file, "POP [%d]\n", language->array_with_variables.size);
     ArrayPush(&language->array_with_variables, &about_variable);
+
+    fprintf(asm_file, "PUSH RAX\n"
+                      "PUSH 1\n"
+                      "ADD\n"
+                      "POP RAX\n");
 }
 
 void PrintChange(Language* language, Tree_node* tree_node, FILE* asm_file) {
@@ -280,6 +289,8 @@ void PrintMainFunction(Language* language, Tree_node* tree_node, FILE* asm_file)
     CreateAsmFile(language, tree_node->right_node, asm_file);
 
     free(language->array_with_variables.data);
+
+    fprintf(asm_file, "JMP :end\n");
 }
 
 void PrintDefFunction(Language* language, Tree_node* tree_node, FILE* asm_file) {
@@ -295,7 +306,7 @@ void PrintDefFunction(Language* language, Tree_node* tree_node, FILE* asm_file) 
     language->array_with_variables = {};
     ArrayCtor(&(language->array_with_variables), sizeof(About_variable), DEFAULT_START_CAPACITY);
 
-    fprintf(asm_file, ":%s\n", NameOfVariable(name_node));
+    fprintf(asm_file, "\n:%s\n", NameOfVariable(name_node));
 
     int cnt_params = 0;
     common_node = common_node->right_node;
@@ -313,7 +324,7 @@ void PrintDefFunction(Language* language, Tree_node* tree_node, FILE* asm_file) 
         cnt_params++;
     }
 
-    for (int i = language->array_with_variables.size - 1; i >= 0; ++i) {
+    for (int i = language->array_with_variables.size - 1; i >= 0; --i) {
         fprintf(asm_file, "PUSH RAX\n"
                           "PUSH %d\n" 
                           "ADD\n"
@@ -344,16 +355,28 @@ void PrintCallFunction(Language* language, Tree_node* tree_node, FILE* asm_file)
 
     while (param_node != NULL 
            && param_node->type == OPERATOR && param_node->value.operators == OPERATOR_PARAM) {
-        fprintf(stderr, "%s: WHILE START: HERE\n", __func__);
-        fprintf(asm_file, "PUSH %d\n", ValueOfVariable(param_node->left_node));
+        for (int i = 0; i < language->array_with_variables.size; ++i) {
+            About_variable about_variable = {};
+            ArrayGetElement(&language->array_with_variables, &about_variable, i);
+
+            if (strcmp(about_variable.name, NameOfVariable(param_node->left_node)) == 0)
+                fprintf(asm_file, "PUSH [%d]\n", about_variable.value);
+        }
+
         param_node = param_node->right_node;
-        fprintf(stderr, "%s: WHILE END: HERE\n", __func__);
     }
-    if (param_node != NULL)
-        fprintf(asm_file, "PUSH %d\n", ValueOfVariable(param_node->right_node));
+    if (param_node != NULL) {
+        for (int i = 0; i < language->array_with_variables.size; ++i) {
+            About_variable about_variable = {};
+            ArrayGetElement(&language->array_with_variables, &about_variable, i);
+
+            if (strcmp(about_variable.name, NameOfVariable(param_node->left_node)) == 0)
+                fprintf(asm_file, "PUSH [%d]\n", about_variable.value);
+        }
+    }
 
     Tree_node* name_node = tree_node->left_node;
-    fprintf(asm_file, "CALL :%s\n", NameOfVariable(name_node));
+    fprintf(asm_file, "CALL :%s\n\n", NameOfVariable(name_node));
 }
 
 void PrintReturnFunction(Language* language, Tree_node* tree_node, FILE* asm_file) {

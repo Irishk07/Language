@@ -7,7 +7,7 @@
 #include "common.h"
 
 
-const size_t DEFAULT_START_CAPACITY = 32; // it must be > 0
+const size_t DEFAULT_START_CAPACITY = 64; // it must be > 0
 const int REALLOC_COEFF = 2;
 
 
