@@ -14,7 +14,7 @@
 
 
 const int LEN_NAME_REGISTER          = 3;
-const int CNT_LABELS                 = 10;
+const int CNT_LABELS                 = 50;
 const int MAX_CNT_COMMANDS           = 128;
 
 enum assembler_status {

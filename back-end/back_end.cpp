@@ -42,6 +42,7 @@ Tree_status BackEnd(Language* language, const char* name_asm_file) {
         TREE_CHECK_AND_RETURN_ERRORS(OPEN_ERROR);
 
     fprintf(asm_file, "PUSH 0\n"
+                      "PUSH 0\n"
                       "POP RAX\n"
                       "CALL :main\n");
 
@@ -62,27 +63,22 @@ void CreateAsmFile(Language* language, Tree_node* tree_node, FILE* asm_file) {
     assert(language);
     assert(asm_file);
 
-    fprintf(stderr, "%s: HERE\n", __func__);
-
     if (tree_node == NULL)
         return;
 
-    if (tree_node->type == NUMBER) {
-        fprintf(stderr, "Number: HERE\n");
+    if (tree_node->type == NUMBER)
         fprintf(asm_file, "PUSH %d\n", tree_node->value.number);
-    }
-    if (tree_node->type == VARIABLE) {
-        for (int i = 0; i < language->array_with_variables.size; ++i) {
-            fprintf(asm_file, "POP RBX\n"
-                              "PUSH RBX\n"
-                              "PUSH RBX\n"
-                              "PUSH %d\n" 
-                              "ADD\n"
-                              "POP RBX\n"
-                              "PUSH [RBX]\n", i);
-        }
-        fprintf(stderr, "Variable: HERE\n");
-    }                     
+    if (tree_node->type == VARIABLE)
+        for (size_t i = 0; i < language->array_with_variables.size; ++i) {
+            if (strcmp(NameOfVariable(tree_node), NameOfVariableFromIndex(&language->array_with_variables, i)) == 0)
+                fprintf(asm_file, "POP RBX\n"
+                                  "PUSH RBX\n"
+                                  "PUSH RBX\n"
+                                  "PUSH %zu\n" 
+                                  "ADD\n"
+                                  "POP RBX\n"
+                                  "PUSH [RBX]\n", i);
+        }               
 
     if (tree_node->type == OPERATOR) {
         switch(tree_node->value.operators) {
@@ -105,6 +101,7 @@ void CreateAsmFile(Language* language, Tree_node* tree_node, FILE* asm_file) {
             case OPERATOR_CH:     PrintMathFunction(language, tree_node, asm_file, "CH");     break;
             case OPERATOR_TH:     PrintMathFunction(language, tree_node, asm_file, "TH");     break;
             case OPERATOR_CTH:    PrintMathFunction(language, tree_node, asm_file, "CTH");    break;
+            case OPERATOR_SQRT:   PrintMathFunction(language, tree_node, asm_file, "SQRT");   break;
             case OPERATOR_ASSIGNMENT: PrintAssignment(language, tree_node, asm_file);         break;
             case OPERATOR_CHANGE: PrintChange(language, tree_node, asm_file);                 break;
             case OPERATOR_IF:     PrintIf(language, tree_node, asm_file);                     break;
@@ -141,9 +138,40 @@ void PrintOperations(Language* language, Tree_node* tree_node, FILE* asm_file, c
     assert(tree_node);
     assert(operation);
 
-    CreateAsmFile(language, tree_node->left_node, asm_file);
-    CreateAsmFile(language, tree_node->right_node, asm_file);
+    if (!IsConstantNode(language, tree_node->left_node) && !IsConstantNode(language, tree_node->right_node)) {
+        CreateAsmFile(language, tree_node->left_node, asm_file);
+        fprintf(asm_file, "POP RCX\n");
+        CreateAsmFile(language, tree_node->right_node, asm_file);
+        fprintf(asm_file, "POP RBX\n");
+        fprintf(asm_file, "PUSH RCX\n");
+        fprintf(asm_file, "PUSH RBX\n");
+    }    
+
+    else {
+        CreateAsmFile(language, tree_node->left_node, asm_file);
+        CreateAsmFile(language, tree_node->right_node, asm_file);
+    }
+
     fprintf(asm_file, "%s\n", operation);
+}
+
+bool IsConstantNode(Language* language, Tree_node* node) {
+    assert(language);
+
+    if (node == NULL) return false;
+    
+    switch (node->type) {
+        case NUMBER:
+            return true;
+        case VARIABLE:
+            return false;
+        case OPERATOR:
+            return IsConstantNode(language, node->left_node) && 
+                   IsConstantNode(language, node->right_node);
+        case WRONG_TYPE:
+        default:
+            return false;
+    }
 }
 
 void PrintMathFunction(Language* language, Tree_node* tree_node, FILE* asm_file, const char* function) {
@@ -161,14 +189,22 @@ void PrintAssignment(Language* language, Tree_node* tree_node, FILE* asm_file) {
     assert(asm_file);
     assert(tree_node);
 
-    fprintf(stderr, "%s: HERE\n", __func__);
-
     CreateAsmFile(language, tree_node->right_node, asm_file);
+
+    fprintf(asm_file, "POP RCX\n");
     
     Tree_node* name_node = tree_node->left_node;
 
-    About_variable about_variable = {.name = NameOfVariable(name_node), .value = language->array_with_variables.size};
-    fprintf(asm_file, "POP [%d]\n", language->array_with_variables.size);
+    About_variable about_variable = {.name = NameOfVariable(name_node), .value = (int)language->array_with_variables.size};
+    fprintf(asm_file, "POP RBX\n"
+                      "PUSH RBX\n"
+                      "PUSH RBX\n"
+                      "PUSH %d\n" 
+                      "ADD\n"
+                      "POP RBX\n"
+                      "PUSH RCX\n"
+                      "POP [RBX]\n", language->array_with_variables.size);
+    // fprintf(asm_file, "POP [%zu]\n", language->array_with_variables.size);
     ArrayPush(&language->array_with_variables, &about_variable);
 
     fprintf(asm_file, "PUSH RAX\n"
@@ -183,15 +219,21 @@ void PrintChange(Language* language, Tree_node* tree_node, FILE* asm_file) {
     assert(tree_node);
 
     CreateAsmFile(language, tree_node->right_node, asm_file);
-    CreateAsmFile(language, tree_node->left_node, asm_file);
+
+    for (size_t i = 0; i < language->array_with_variables.size; ++i) {
+        if (strcmp(NameOfVariable(tree_node->left_node), NameOfVariableFromIndex(&language->array_with_variables, i)) == 0)
+            fprintf(asm_file, "PUSH RBX\n"
+                              "PUSH %d\n" 
+                              "ADD\n"
+                              "POP RBX\n"
+                              "POP [RBX]\n", ValueOfVariableFromIndex(&language->array_with_variables, i));
+    }         
 }
 
 void PrintIf(Language* language, Tree_node* tree_node, FILE* asm_file) {
     assert(language);
     assert(asm_file);
     assert(tree_node);
-
-    fprintf(stderr, "%s: HERE\n", __func__);
 
     Tree_node* condition = tree_node->left_node;
 
@@ -208,7 +250,7 @@ void PrintIf(Language* language, Tree_node* tree_node, FILE* asm_file) {
         else if (type_operator == OPERATOR_BEFORE)
             fprintf(asm_file, "JAE ");
         if (type_operator == OPERATOR_EQUAL)
-            fprintf(asm_file, "JE ");
+            fprintf(asm_file, "JNE ");
     }
     else {
         CreateAsmFile(language, condition, asm_file);
@@ -267,8 +309,6 @@ void PrintOut(Language* language, Tree_node* tree_node, FILE* asm_file) {
     assert(tree_node);
     assert(asm_file);
 
-    fprintf(stderr, "%s: HERE\n", __func__);
-
     CreateAsmFile(language, tree_node->left_node, asm_file);
 
     fprintf(asm_file, "OUT\n");
@@ -278,8 +318,6 @@ void PrintMainFunction(Language* language, Tree_node* tree_node, FILE* asm_file)
     assert(language);
     assert(tree_node);
     assert(asm_file);
-
-    fprintf(stderr, "%s: HERE\n", __func__);
 
     language->array_with_variables = {};
     ArrayCtor(&(language->array_with_variables), sizeof(About_variable), DEFAULT_START_CAPACITY);
@@ -298,8 +336,6 @@ void PrintDefFunction(Language* language, Tree_node* tree_node, FILE* asm_file) 
     assert(tree_node);
     assert(asm_file);
 
-    fprintf(stderr, "%s: HERE\n", __func__);
-
     Tree_node* common_node = tree_node->left_node;
     Tree_node* name_node = common_node->left_node;
 
@@ -313,18 +349,20 @@ void PrintDefFunction(Language* language, Tree_node* tree_node, FILE* asm_file) 
     while (common_node != NULL 
            && common_node->type == OPERATOR && common_node->value.operators == OPERATOR_PARAM) {
         About_variable about_variable = {.name = NameOfVariable(common_node->left_node), .value = cnt_params};
+        fprintf(stderr, "HERE1\n");
         ArrayPush(&language->array_with_variables, &about_variable);
 
         common_node = common_node->right_node;
         cnt_params++;
     }
     if (common_node != NULL) {
-        About_variable about_variable = {.name = NameOfVariable(common_node->right_node), .value = cnt_params};
+        About_variable about_variable = {.name = NameOfVariable(common_node), .value = cnt_params};
+        fprintf(stderr, "HERE2\n");
         ArrayPush(&language->array_with_variables, &about_variable);
         cnt_params++;
     }
 
-    for (int i = language->array_with_variables.size - 1; i >= 0; --i) {
+    for (int i = (int)language->array_with_variables.size - 1; i >= 0; --i) {
         fprintf(asm_file, "PUSH RAX\n"
                           "PUSH %d\n" 
                           "ADD\n"
@@ -347,36 +385,41 @@ void PrintCallFunction(Language* language, Tree_node* tree_node, FILE* asm_file)
     assert(tree_node);
     assert(asm_file);
 
-    fprintf(stderr, "%s: HERE\n", __func__);
-
     fprintf(asm_file, "PUSH RAX\n");
 
     Tree_node* param_node = tree_node->right_node;
 
     while (param_node != NULL 
            && param_node->type == OPERATOR && param_node->value.operators == OPERATOR_PARAM) {
-        for (int i = 0; i < language->array_with_variables.size; ++i) {
+        for (size_t i = 0; i < language->array_with_variables.size; ++i) {
             About_variable about_variable = {};
             ArrayGetElement(&language->array_with_variables, &about_variable, i);
 
             if (strcmp(about_variable.name, NameOfVariable(param_node->left_node)) == 0)
                 fprintf(asm_file, "PUSH [%d]\n", about_variable.value);
+            fprintf(stderr, "HERE3\n");
         }
 
         param_node = param_node->right_node;
     }
     if (param_node != NULL) {
-        for (int i = 0; i < language->array_with_variables.size; ++i) {
+        for (size_t i = 0; i < language->array_with_variables.size; ++i) {
             About_variable about_variable = {};
             ArrayGetElement(&language->array_with_variables, &about_variable, i);
 
-            if (strcmp(about_variable.name, NameOfVariable(param_node->left_node)) == 0)
+            if (strcmp(about_variable.name, NameOfVariable(param_node)) == 0)
                 fprintf(asm_file, "PUSH [%d]\n", about_variable.value);
+
+            fprintf(stderr, "HERE4\n");
         }
     }
 
     Tree_node* name_node = tree_node->left_node;
     fprintf(asm_file, "CALL :%s\n\n", NameOfVariable(name_node));
+
+    fprintf(asm_file, "POP RBX\n"
+                      "POP RAX\n"
+                      "PUSH RBX\n");
 }
 
 void PrintReturnFunction(Language* language, Tree_node* tree_node, FILE* asm_file) {
@@ -384,9 +427,8 @@ void PrintReturnFunction(Language* language, Tree_node* tree_node, FILE* asm_fil
     assert(tree_node);
     assert(asm_file);
 
-    fprintf(stderr, "%s: HERE\n", __func__);
-
     CreateAsmFile(language, tree_node->left_node, asm_file);
+
     fprintf(asm_file, "RET\n");
 }
 

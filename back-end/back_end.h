@@ -32,6 +32,8 @@ void CreateAsmFile(Language* language, Tree_node* tree_node, FILE* asm_file);
 
 void PrintOperations(Language* language, Tree_node* tree_node, FILE* asm_file, const char* operation);
 
+bool IsConstantNode(Language* language, Tree_node* node);
+
 void PrintMathFunction(Language* language, Tree_node* tree_node, FILE* asm_file, const char* function);
 
 void PrintAssignment(Language* language, Tree_node* tree_node, FILE* asm_file);

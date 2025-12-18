@@ -71,6 +71,7 @@ enum Type_operators {
     OPERATOR_RETURN        = 38,
     OPERATOR_PARAM         = 39,
     OPERATOR_MAIN_FUNCTION = 40,
+    OPERATOR_SQRT          = 41,
     WRONG_OPERATOR
 };
 
@@ -118,6 +119,7 @@ About_function const key_words[] = {
     KEY_WORD("ch",     OPERATOR_CH,            "ch"),
     KEY_WORD("th",     OPERATOR_TH,            "th"),
     KEY_WORD("cth",    OPERATOR_CTH,           "cth"),
+    KEY_WORD("sqrt",   OPERATOR_SQRT,          "sqrt"),
     KEY_WORD("Bye",    OPERATOR_FINISH_SYMBOL, "$"),
     KEY_WORD("and",    OPERATOR_PARAM,         ","),
     KEY_WORD("We resolve conflict if you call chef and check", OPERATOR_IF,            "if"),
