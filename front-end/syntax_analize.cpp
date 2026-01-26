@@ -24,7 +24,7 @@
 // MainFunction       ::= "Welcome!" Variable '+___-' {Return | Operators+} '-___+'                                                                     // 
 // DefinitionFunction ::= "Recipe:" Variable '*_^' Variable{'and' Variable}* '^_*' '+___-' {Return | Operators+} '-___+'                                // 
 // Return             ::= "Return the money for" Expression                                                                                             //
-// Operators          ::= {CallFunction | AssignmentOrChange | Changes | WhileOrIf | '+___-' Operators+ '-___+' | Print | Return} ';)'                                         //     
+// Operators          ::= {CallFunction | AssignmentOrChange | Changes | WhileOrIf | '+___-' Operators+ '-___+' | Print | Return} ';)'                  //                              //     
 // WhileOrIf          ::= {If | While}                                                                                                                  //
 // While              ::= "I didn't write complaint only because" '*_^' Expression  {[Compares | Equals] Expression}? '^_*' Operators                   //
 // If                 ::= "We resolve conflict if you call chef and check" '*_^' Expression  {[Compares | Equals] Expression}? '^_*' Operators Else?    //
@@ -35,17 +35,18 @@
 // AssignmentOrChange ::= {Assignment | Changes}                                                                                                        //
 // Changes            ::= "I want to change my order:" Expression '->' Variable                                                                         //
 //                        "I repeat changes:" Expression '->' Variable                                                                                  //
-// Assignment         ::= "I want to place an order: bring to me" Expression '->' Variable                                                              //
+// Assignment         ::= "I want to place an order:" Expression '->' Variable                                                                          //
 //                        "I repeat my order:" Expression '->' Variable                                                                                 //
 // Expression         ::= Term{[+ -]Term}*                                                                                                              //
 // Term               ::= Pow{[* /]Pow}*                                                                                                                //
 // Pow                ::= PrimaryExpression{[^]PrimaryExpression}*                                                                                      //
-// PrimaryExpression  ::= '*_^' Expression '^_*' | Number | Variable | MathFunction | Input | CallFunction                                              //
-// Number             ::= '-'? [0-9]+                                                                                                                        //
+// PrimaryExpression  ::= '*_^' Expression '^_*' | Number | Variable | MathFunction | Input | CallFunction | Draw                                       //
+// Number             ::= '-'? [0-9]+                                                                                                                   //
 // Variable           ::= '-'? [a-zA-Z_][a-zA-z0-9_]*                                                                                                   //
 // MathFunction       ::= [ln, sin, cos, tg, ctg, arcsin, arccos, arctg, arcctg, sh, ch, th, cth] '*_^' Expression '^_*'                                //
 // Input              ::= "Bring menu"                                                                                                                  //
 // CallFunction       ::= "Waiter!" Variable '*_^' Variable{'and' Variable}* '^_*'                                                                      //
+// Draw               ::= "I want to drawdrawdraw"                                                                                                      //
 // +++++++++++++++++|||||++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ //
 
 
@@ -160,7 +161,7 @@ Tree_node* LangGetParams(Language* language, size_t* number_token, Tree_status* 
     (*number_token)++;
     free(cur_token);
 
-    Tree_node* variable_node = LangGetVariable(language, number_token, status);
+    Tree_node* variable_node = LangGetExpression(language, number_token, status);
     if (variable_node == NULL)
         return NULL;
 
@@ -171,7 +172,7 @@ Tree_node* LangGetParams(Language* language, size_t* number_token, Tree_status* 
         if (cur_token->type == OPERATOR && cur_token->value.operators == OPERATOR_PARAM) { // wait ,
             (*number_token)++;
 
-            variable_node = LangGetVariable(language, number_token, status);
+            variable_node = LangGetExpression(language, number_token, status);
             if (variable_node == NULL)
                 return NULL;
 
@@ -210,9 +211,9 @@ Tree_node* LangGetFunctionBody(Language* language, size_t* number_token, Tree_st
 
     ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token);
     while (cur_token->type != OPERATOR || cur_token->value.operators != OPERATOR_CLOSE_FIGURE) { // wait }
-        Tree_node* operators_node = LangGetOperators(language, number_token, status);
+        Tree_node* operators_node = LangGetReturn(language, number_token, status); 
         if (operators_node == NULL)
-            operators_node = LangGetReturn(language, number_token, status);
+            operators_node = LangGetOperators(language, number_token, status);
 
         if (operators_node == NULL)
             return NULL;
@@ -255,7 +256,7 @@ Tree_node* LangGetReturn(Language* language, size_t* number_token, Tree_status* 
     ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token);
     if (cur_token->type == OPERATOR && cur_token->value.operators == OPERATOR_COMMON) {
         (*number_token)++;
-        cur_token->right_node = return_node;
+        cur_token->left_node = return_node;
     }     
 
     return cur_token;
@@ -713,6 +714,10 @@ Tree_node* LangGetPrimaryExpression(Language* language, size_t* number_token, Tr
         element_node = LangGetMathFunction(language, number_token, status);
         if (element_node != NULL)
             return element_node;
+
+        element_node = LangGetDraw(language, number_token, status);
+        if (element_node != NULL)
+            return element_node;
     }
 
     DUMP_CURRENT_SITUATION(element_node);
@@ -846,7 +851,7 @@ Tree_node* LangGetCallFuntion(Language* language, size_t* number_token, Tree_sta
     (*number_token)++;
     Tree_node* call_node = cur_token;
 
-    Tree_node* name_node = LangGetVariable(language, number_token, status);
+    Tree_node* name_node = LangGetExpression(language, number_token, status);
     if (name_node == NULL)
         return NULL;
 
@@ -858,4 +863,20 @@ Tree_node* LangGetCallFuntion(Language* language, size_t* number_token, Tree_sta
     call_node->right_node = param_node;
 
     return call_node;
+}
+
+Tree_node* LangGetDraw(Language* language, size_t* number_token, Tree_status* status) {
+    assert(language);
+    assert(status);
+
+    Tree_node* input_node = NULL;
+    ArrayGetElement(&(language->array_with_tokens), &input_node, *number_token);
+
+    if (input_node->type == OPERATOR && input_node->value.operators == OPERATOR_DRAW) { // wait draw
+        (*number_token)++;
+
+        return input_node;
+    }
+
+    return NULL;
 }

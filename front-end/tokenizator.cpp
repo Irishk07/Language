@@ -43,8 +43,10 @@ Tree_status Tokenizator(Language* language) {
         else
             tree_node = ReadKeyWords(language, &str);
 
-        if (tree_node == NULL)
+        if (tree_node == NULL) {
+            fprintf(stderr, "'%s'\n", str);
             TREE_CHECK_AND_RETURN_ERRORS(UNKNOWN_OPERATOR);
+        }
 
         SkipSpaces(&str);
         SkipComments(&str);

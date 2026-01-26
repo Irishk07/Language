@@ -42,9 +42,10 @@ Tree_status BackEnd(Language* language, const char* name_asm_file) {
         TREE_CHECK_AND_RETURN_ERRORS(OPEN_ERROR);
 
     fprintf(asm_file, "PUSH 0\n"
-                      "PUSH 0\n"
                       "POP RAX\n"
-                      "CALL :main\n");
+                      "PUSH 0\n"
+                      "POP RBX\n"
+                      "CALL :main\n\n");
 
     fprintf(stderr, "%s: HERE\n", __func__);
 
@@ -68,16 +69,15 @@ void CreateAsmFile(Language* language, Tree_node* tree_node, FILE* asm_file) {
 
     if (tree_node->type == NUMBER)
         fprintf(asm_file, "PUSH %d\n", tree_node->value.number);
+
     if (tree_node->type == VARIABLE)
         for (size_t i = 0; i < language->array_with_variables.size; ++i) {
             if (strcmp(NameOfVariable(tree_node), NameOfVariableFromIndex(&language->array_with_variables, i)) == 0)
-                fprintf(asm_file, "POP RBX\n"
-                                  "PUSH RBX\n"
-                                  "PUSH RBX\n"
+                fprintf(asm_file, "PUSH RBX\n"
                                   "PUSH %zu\n" 
                                   "ADD\n"
-                                  "POP RBX\n"
-                                  "PUSH [RBX]\n", i);
+                                  "POP RCX\n"
+                                  "PUSH [RCX]\n", i);
         }               
 
     if (tree_node->type == OPERATOR) {
@@ -86,7 +86,8 @@ void CreateAsmFile(Language* language, Tree_node* tree_node, FILE* asm_file) {
             case OPERATOR_SUB:    PrintOperations(language, tree_node, asm_file, "SUB");      break;
             case OPERATOR_MUL:    PrintOperations(language, tree_node, asm_file, "MUL");      break;    
             case OPERATOR_DIV:    PrintOperations(language, tree_node, asm_file, "DIV");      break;   
-            case OPERATOR_POW:    PrintOperations(language, tree_node, asm_file, "POW");      break;   
+            case OPERATOR_POW:    PrintOperations(language, tree_node, asm_file, "POW");      break; 
+
             case OPERATOR_LN:     PrintMathFunction(language, tree_node, asm_file, "LN");     break;    
             case OPERATOR_LOG:    PrintMathFunction(language, tree_node, asm_file, "LOG");    break;    
             case OPERATOR_SIN:    PrintMathFunction(language, tree_node, asm_file, "SIN");    break;   
@@ -102,21 +103,28 @@ void CreateAsmFile(Language* language, Tree_node* tree_node, FILE* asm_file) {
             case OPERATOR_TH:     PrintMathFunction(language, tree_node, asm_file, "TH");     break;
             case OPERATOR_CTH:    PrintMathFunction(language, tree_node, asm_file, "CTH");    break;
             case OPERATOR_SQRT:   PrintMathFunction(language, tree_node, asm_file, "SQRT");   break;
+
+            case OPERATOR_DRAW:   fprintf(asm_file, "DRAW\n");                                break;
+
             case OPERATOR_ASSIGNMENT: PrintAssignment(language, tree_node, asm_file);         break;
-            case OPERATOR_CHANGE: PrintChange(language, tree_node, asm_file);                 break;
-            case OPERATOR_IF:     PrintIf(language, tree_node, asm_file);                     break;
-            case OPERATOR_ELSE:   break;
-            case OPERATOR_WHILE:  PrintWhile(language, tree_node, asm_file);                  break;
+            case OPERATOR_CHANGE:     PrintChange(language, tree_node, asm_file);             break;
+
+            case OPERATOR_IF:         PrintIf(language, tree_node, asm_file);                 break;
+            case OPERATOR_ELSE:                                                               break;
+            case OPERATOR_WHILE:      PrintWhile(language, tree_node, asm_file);              break;
+
             case OPERATOR_COMMON:
-            case OPERATOR_PARAM:  fprintf(stderr, "COMMON: HERE\n");
-                                  CreateAsmFile(language, tree_node->left_node, asm_file);
+            case OPERATOR_PARAM:  CreateAsmFile(language, tree_node->left_node, asm_file);
                                   CreateAsmFile(language, tree_node->right_node, asm_file);   break;
+
             case OPERATOR_INPUT:  fprintf(asm_file, "IN\n");                                  break;
             case OPERATOR_PRINT:  PrintOut(language, tree_node, asm_file);                    break;
+
             case OPERATOR_MAIN_FUNCTION: PrintMainFunction(language, tree_node, asm_file);    break;
-            case OPERATOR_DEF_FUNCTION: PrintDefFunction(language, tree_node, asm_file);      break;
+            case OPERATOR_DEF_FUNCTION:  PrintDefFunction(language, tree_node, asm_file);     break;
             case OPERATOR_CALL_FUNCTION: PrintCallFunction(language, tree_node, asm_file);    break;
-            case OPERATOR_RETURN: PrintReturnFunction(language, tree_node, asm_file);         break;
+            case OPERATOR_RETURN:        PrintReturnFunction(language, tree_node, asm_file);  break;
+
             case OPERATOR_ABOVE:
             case OPERATOR_BEFORE:
             case OPERATOR_EQUAL: 
@@ -138,21 +146,14 @@ void PrintOperations(Language* language, Tree_node* tree_node, FILE* asm_file, c
     assert(tree_node);
     assert(operation);
 
-    if (!IsConstantNode(language, tree_node->left_node) && !IsConstantNode(language, tree_node->right_node)) {
-        CreateAsmFile(language, tree_node->left_node, asm_file);
-        fprintf(asm_file, "POP RCX\n");
-        CreateAsmFile(language, tree_node->right_node, asm_file);
-        fprintf(asm_file, "POP RBX\n");
-        fprintf(asm_file, "PUSH RCX\n");
-        fprintf(asm_file, "PUSH RBX\n");
-    }    
+    fprintf(asm_file, "/ begin operation %s:\n", operation);
 
-    else {
-        CreateAsmFile(language, tree_node->left_node, asm_file);
-        CreateAsmFile(language, tree_node->right_node, asm_file);
-    }
+    CreateAsmFile(language, tree_node->left_node, asm_file);
+    CreateAsmFile(language, tree_node->right_node, asm_file);
 
     fprintf(asm_file, "%s\n", operation);
+
+    fprintf(asm_file, "/ end operation %s:\n\n", operation);
 }
 
 bool IsConstantNode(Language* language, Tree_node* node) {
@@ -180,8 +181,12 @@ void PrintMathFunction(Language* language, Tree_node* tree_node, FILE* asm_file,
     assert(tree_node);
     assert(function);
 
+    fprintf(asm_file, "/ begin function %s:\n", function);
+
     CreateAsmFile(language, tree_node->left_node, asm_file);
     fprintf(asm_file, "%s\n", function);
+
+    fprintf(asm_file, "/ end function %s:\n\n", function);
 }
 
 void PrintAssignment(Language* language, Tree_node* tree_node, FILE* asm_file) {
@@ -189,34 +194,34 @@ void PrintAssignment(Language* language, Tree_node* tree_node, FILE* asm_file) {
     assert(asm_file);
     assert(tree_node);
 
-    CreateAsmFile(language, tree_node->right_node, asm_file);
+    fprintf(asm_file, "/ begin assignment:\n");
 
-    fprintf(asm_file, "POP RCX\n");
+    CreateAsmFile(language, tree_node->right_node, asm_file);
     
     Tree_node* name_node = tree_node->left_node;
 
     About_variable about_variable = {.name = NameOfVariable(name_node), .value = (int)language->array_with_variables.size};
-    fprintf(asm_file, "POP RBX\n"
-                      "PUSH RBX\n"
-                      "PUSH RBX\n"
-                      "PUSH %d\n" 
+    fprintf(asm_file, "PUSH RBX\n"
+                      "PUSH %zu\n"
                       "ADD\n"
-                      "POP RBX\n"
-                      "PUSH RCX\n"
-                      "POP [RBX]\n", language->array_with_variables.size);
-    // fprintf(asm_file, "POP [%zu]\n", language->array_with_variables.size);
+                      "POP RCX\n"
+                      "POP [RCX]\n", language->array_with_variables.size);
     ArrayPush(&language->array_with_variables, &about_variable);
 
     fprintf(asm_file, "PUSH RAX\n"
                       "PUSH 1\n"
                       "ADD\n"
                       "POP RAX\n");
+
+    fprintf(asm_file, "/ end assignment:\n\n");
 }
 
 void PrintChange(Language* language, Tree_node* tree_node, FILE* asm_file) {
     assert(language);
     assert(asm_file);
     assert(tree_node);
+
+    fprintf(asm_file, "/ begin change:\n");
 
     CreateAsmFile(language, tree_node->right_node, asm_file);
 
@@ -225,15 +230,19 @@ void PrintChange(Language* language, Tree_node* tree_node, FILE* asm_file) {
             fprintf(asm_file, "PUSH RBX\n"
                               "PUSH %d\n" 
                               "ADD\n"
-                              "POP RBX\n"
-                              "POP [RBX]\n", ValueOfVariableFromIndex(&language->array_with_variables, i));
+                              "POP RCX\n"
+                              "POP [RCX]\n", ValueOfVariableFromIndex(&language->array_with_variables, i));
     }         
+
+    fprintf(asm_file, "/ end change:\n\n");
 }
 
 void PrintIf(Language* language, Tree_node* tree_node, FILE* asm_file) {
     assert(language);
     assert(asm_file);
     assert(tree_node);
+
+    fprintf(asm_file, "/ begin if:\n");
 
     Tree_node* condition = tree_node->left_node;
 
@@ -268,6 +277,8 @@ void PrintIf(Language* language, Tree_node* tree_node, FILE* asm_file) {
     fprintf(asm_file, ":end_if_%zu\n", language->cnt_labels.cnt_if);
 
     language->cnt_labels.cnt_if++;
+
+    fprintf(asm_file, "/ end if:\n\n");
 }
 
 void PrintElse(Language* language, Tree_node* tree_node, FILE* asm_file) {
@@ -283,12 +294,16 @@ void PrintElse(Language* language, Tree_node* tree_node, FILE* asm_file) {
     CreateAsmFile(language, tree_node->right_node, asm_file); // in else
 
     language->cnt_labels.cnt_else++;
+
+    fprintf(asm_file, "/ end else:\n\n");
 }
 
 void PrintWhile(Language* language, Tree_node* tree_node, FILE* asm_file) {
     assert(language);
     assert(asm_file);
     assert(tree_node);
+
+    fprintf(asm_file, "/ begin while:\n");
 
     fprintf(asm_file, ":begin_while_%zu\n", language->cnt_labels.cnt_while);
 
@@ -302,6 +317,8 @@ void PrintWhile(Language* language, Tree_node* tree_node, FILE* asm_file) {
     fprintf(asm_file, ":end_while_%zu\n", language->cnt_labels.cnt_while);
 
     language->cnt_labels.cnt_while++;
+
+    fprintf(asm_file, "/ end while:\n\n");
 }
 
 void PrintOut(Language* language, Tree_node* tree_node, FILE* asm_file) {
@@ -309,15 +326,21 @@ void PrintOut(Language* language, Tree_node* tree_node, FILE* asm_file) {
     assert(tree_node);
     assert(asm_file);
 
+    fprintf(asm_file, "/ begin out:\n");
+
     CreateAsmFile(language, tree_node->left_node, asm_file);
 
     fprintf(asm_file, "OUT\n");
+
+    fprintf(asm_file, "/ end out:\n\n");
 }
 
 void PrintMainFunction(Language* language, Tree_node* tree_node, FILE* asm_file) {
     assert(language);
     assert(tree_node);
     assert(asm_file);
+
+    fprintf(asm_file, "/ begin main:\n");
 
     language->array_with_variables = {};
     ArrayCtor(&(language->array_with_variables), sizeof(About_variable), DEFAULT_START_CAPACITY);
@@ -329,12 +352,16 @@ void PrintMainFunction(Language* language, Tree_node* tree_node, FILE* asm_file)
     free(language->array_with_variables.data);
 
     fprintf(asm_file, "JMP :end\n");
+
+    fprintf(asm_file, "/ end main:\n\n");
 }
 
 void PrintDefFunction(Language* language, Tree_node* tree_node, FILE* asm_file) {
     assert(language);
     assert(tree_node);
     assert(asm_file);
+
+    fprintf(asm_file, "/ begin def function:\n");
 
     Tree_node* common_node = tree_node->left_node;
     Tree_node* name_node = common_node->left_node;
@@ -366,11 +393,13 @@ void PrintDefFunction(Language* language, Tree_node* tree_node, FILE* asm_file) 
         fprintf(asm_file, "PUSH RAX\n"
                           "PUSH %d\n" 
                           "ADD\n"
-                          "POP RBX\n"
-                          "POP [RBX]\n", i);
+                          "POP RCX\n"
+                          "POP [RCX]\n", i);
     }
 
     fprintf(asm_file, "PUSH RAX\n"
+                      "POP RBX\n"
+                      "PUSH RAX\n"
                       "PUSH %d\n"
                       "ADD\n"
                       "POP RAX\n", cnt_params);
@@ -378,6 +407,8 @@ void PrintDefFunction(Language* language, Tree_node* tree_node, FILE* asm_file) 
     CreateAsmFile(language, tree_node->right_node, asm_file);
 
     free(language->array_with_variables.data);
+
+    fprintf(asm_file, "/ end def function\n\n");
 }
 
 void PrintCallFunction(Language* language, Tree_node* tree_node, FILE* asm_file) {
@@ -385,20 +416,13 @@ void PrintCallFunction(Language* language, Tree_node* tree_node, FILE* asm_file)
     assert(tree_node);
     assert(asm_file);
 
-    fprintf(asm_file, "PUSH RAX\n");
+    fprintf(asm_file, "/ begin call function:\n");
 
     Tree_node* param_node = tree_node->right_node;
 
     while (param_node != NULL 
            && param_node->type == OPERATOR && param_node->value.operators == OPERATOR_PARAM) {
-        for (size_t i = 0; i < language->array_with_variables.size; ++i) {
-            About_variable about_variable = {};
-            ArrayGetElement(&language->array_with_variables, &about_variable, i);
-
-            if (strcmp(about_variable.name, NameOfVariable(param_node->left_node)) == 0)
-                fprintf(asm_file, "PUSH [%d]\n", about_variable.value);
-            fprintf(stderr, "HERE3\n");
-        }
+        CreateAsmFile(language, param_node->left_node, asm_file);
 
         param_node = param_node->right_node;
     }
@@ -408,7 +432,11 @@ void PrintCallFunction(Language* language, Tree_node* tree_node, FILE* asm_file)
             ArrayGetElement(&language->array_with_variables, &about_variable, i);
 
             if (strcmp(about_variable.name, NameOfVariable(param_node)) == 0)
-                fprintf(asm_file, "PUSH [%d]\n", about_variable.value);
+                fprintf(asm_file, "PUSH RBX\n"
+                                  "PUSH %zu\n"
+                                  "ADD\n"
+                                  "POP RCX\n"
+                                  "PUSH [RCX]\n", i);
 
             fprintf(stderr, "HERE4\n");
         }
@@ -417,9 +445,20 @@ void PrintCallFunction(Language* language, Tree_node* tree_node, FILE* asm_file)
     Tree_node* name_node = tree_node->left_node;
     fprintf(asm_file, "CALL :%s\n\n", NameOfVariable(name_node));
 
-    fprintf(asm_file, "POP RBX\n"
+    fprintf(asm_file, "PUSH RAX\n"
+                      "PUSH RBX\n"
+                      "SUB\n"
+                      "POP RCX\n"
+                      "PUSH RAX\n"
+                      "PUSH RCX\n"
+                      "SUB\n"
                       "POP RAX\n"
-                      "PUSH RBX\n");
+                      "PUSH RBX\n"
+                      "PUSH RCX\n"
+                      "SUB\n"
+                      "POP RBX\n");
+
+    fprintf(asm_file, "/ end call function\n\n");
 }
 
 void PrintReturnFunction(Language* language, Tree_node* tree_node, FILE* asm_file) {
@@ -427,9 +466,13 @@ void PrintReturnFunction(Language* language, Tree_node* tree_node, FILE* asm_fil
     assert(tree_node);
     assert(asm_file);
 
+    fprintf(asm_file, "/ begin return:\n");
+
     CreateAsmFile(language, tree_node->left_node, asm_file);
 
     fprintf(asm_file, "RET\n");
+
+    fprintf(asm_file, "/ end return:\n\n");
 }
 
 Tree_status ReadPreOrderTreeFile(Language* language) {

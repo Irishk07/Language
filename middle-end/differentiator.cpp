@@ -32,9 +32,11 @@ void OptimizationNode(Language* language, Tree_node** old_node) {
     Tree tree = language->tree;
 
     if (IsConstantNode(language, *old_node)) {
-        int result = (int)Calculating(language, (*old_node));
-        LanguageNodeDtor(language, *old_node);
-        *old_node = NUMBER_NODE_CTOR(result);
+        double result = Calculating(language, (*old_node));
+        if (!isnan(result)) {
+            LanguageNodeDtor(language, *old_node);
+            *old_node = NUMBER_NODE_CTOR((int)result);
+        }
         return;
     }
 
