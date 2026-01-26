@@ -64,7 +64,8 @@ enum code_comand {
     CMD_SH     = 37,
     CMD_CH     = 38,  
     CMD_TH     = 39,
-    CMD_CTH    = 40
+    CMD_CTH    = 40,
+    CMD_DRAW   = 41
 };
 
 enum type_arguments {
@@ -203,6 +204,8 @@ processor_status do_ch(Processor* processor);
 processor_status do_th(Processor* processor);
 
 processor_status do_cth(Processor* processor);
+
+processor_status draw_ram(Processor* processor);
 )
 
 
@@ -246,7 +249,8 @@ const About_commands about_commands [] = {
     {.name = "SH",    .code = CMD_SH,     .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2("SH"))     IF_PROCESSOR(, .function = &do_sh)},
     {.name = "CH",    .code = CMD_CH,     .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2("CH"))     IF_PROCESSOR(, .function = &do_ch)},
     {.name = "TH",    .code = CMD_TH,     .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2("TH"))     IF_PROCESSOR(, .function = &do_th)},
-    {.name = "CTH",   .code = CMD_CTH,    .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2("CTH"))    IF_PROCESSOR(, .function = &do_cth)}
+    {.name = "CTH",   .code = CMD_CTH,    .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2("CTH"))    IF_PROCESSOR(, .function = &do_cth)},
+    {.name = "DRAW",  .code = CMD_DRAW,   .type_argument = NO_ARGUMENT,      .argument = 0 IF_ASSEMBLER(, .hash = hash_djb2("DRAW"))   IF_PROCESSOR(, .function = &draw_ram)}
 };
 
 const size_t SIZE_ABOUT_COMMANDS = sizeof(about_commands) / sizeof(about_commands[0]);

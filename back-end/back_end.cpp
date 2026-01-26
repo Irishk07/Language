@@ -47,8 +47,6 @@ Tree_status BackEnd(Language* language, const char* name_asm_file) {
                       "POP RBX\n"
                       "CALL :main\n\n");
 
-    fprintf(stderr, "%s: HERE\n", __func__);
-
     CreateAsmFile(language, language->tree.root, asm_file);
 
     fprintf(asm_file, ":end\n" 
@@ -201,11 +199,7 @@ void PrintAssignment(Language* language, Tree_node* tree_node, FILE* asm_file) {
     Tree_node* name_node = tree_node->left_node;
 
     About_variable about_variable = {.name = NameOfVariable(name_node), .value = (int)language->array_with_variables.size};
-    fprintf(asm_file, "PUSH RBX\n"
-                      "PUSH %zu\n"
-                      "ADD\n"
-                      "POP RCX\n"
-                      "POP [RCX]\n", language->array_with_variables.size);
+    fprintf(asm_file, "POP [RAX]\n");
     ArrayPush(&language->array_with_variables, &about_variable);
 
     fprintf(asm_file, "PUSH RAX\n"
@@ -305,18 +299,38 @@ void PrintWhile(Language* language, Tree_node* tree_node, FILE* asm_file) {
 
     fprintf(asm_file, "/ begin while:\n");
 
-    fprintf(asm_file, ":begin_while_%zu\n", language->cnt_labels.cnt_while);
+    size_t cnt_while = language->cnt_labels.cnt_while;
+    fprintf(asm_file, ":begin_while_%zu\n", cnt_while);
+    language->cnt_labels.cnt_while++;
 
-    CreateAsmFile(language, tree_node->left_node, asm_file);
+    Tree_node* condition = tree_node->left_node;
 
-    fprintf(asm_file, "JE :end_while_%zu\n", language->cnt_labels.cnt_while);
+    if (condition->type == OPERATOR && (condition->value.operators == OPERATOR_ABOVE ||
+                                        condition->value.operators == OPERATOR_BEFORE ||
+                                        condition->value.operators == OPERATOR_EQUAL)) {
+        Type_operators type_operator = condition->value.operators;
+
+        CreateAsmFile(language, condition->left_node, asm_file);
+        CreateAsmFile(language, condition->right_node, asm_file);
+
+        if (type_operator == OPERATOR_ABOVE)
+            fprintf(asm_file, "JBE ");
+        else if (type_operator == OPERATOR_BEFORE)
+            fprintf(asm_file, "JAE ");
+        if (type_operator == OPERATOR_EQUAL)
+            fprintf(asm_file, "JNE ");
+    }
+    else {
+        CreateAsmFile(language, condition, asm_file);
+        fprintf(asm_file, "PUSH 0\n"
+                          "JE ");
+    }
+    fprintf(asm_file, ":end_while_%zu\n", cnt_while);
 
     CreateAsmFile(language, tree_node->right_node, asm_file);
-    fprintf(asm_file, "JMP :begin_while_%zu\n", language->cnt_labels.cnt_while);
+    fprintf(asm_file, "JMP :begin_while_%zu\n", cnt_while);
 
-    fprintf(asm_file, ":end_while_%zu\n", language->cnt_labels.cnt_while);
-
-    language->cnt_labels.cnt_while++;
+    fprintf(asm_file, ":end_while_%zu\n", cnt_while);
 
     fprintf(asm_file, "/ end while:\n\n");
 }
@@ -376,7 +390,6 @@ void PrintDefFunction(Language* language, Tree_node* tree_node, FILE* asm_file) 
     while (common_node != NULL 
            && common_node->type == OPERATOR && common_node->value.operators == OPERATOR_PARAM) {
         About_variable about_variable = {.name = NameOfVariable(common_node->left_node), .value = cnt_params};
-        fprintf(stderr, "HERE1\n");
         ArrayPush(&language->array_with_variables, &about_variable);
 
         common_node = common_node->right_node;
@@ -384,7 +397,6 @@ void PrintDefFunction(Language* language, Tree_node* tree_node, FILE* asm_file) 
     }
     if (common_node != NULL) {
         About_variable about_variable = {.name = NameOfVariable(common_node), .value = cnt_params};
-        fprintf(stderr, "HERE2\n");
         ArrayPush(&language->array_with_variables, &about_variable);
         cnt_params++;
     }
@@ -437,8 +449,6 @@ void PrintCallFunction(Language* language, Tree_node* tree_node, FILE* asm_file)
                                   "ADD\n"
                                   "POP RCX\n"
                                   "PUSH [RCX]\n", i);
-
-            fprintf(stderr, "HERE4\n");
         }
     }
 

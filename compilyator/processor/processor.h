@@ -51,7 +51,5 @@ void ProcDump(const Processor* processor, type_error_t code_error, int line, con
 
 processor_status ProcDtor(Processor* processor);
 
-void draw_ram(Processor* processor);
-
 
 #endif //PROCESSOR_H_

@@ -24,7 +24,7 @@
 // MainFunction       ::= "Welcome!" Variable '+___-' {Return | Operators+} '-___+'                                                                     // 
 // DefinitionFunction ::= "Recipe:" Variable '*_^' Variable{'and' Variable}* '^_*' '+___-' {Return | Operators+} '-___+'                                // 
 // Return             ::= "Return the money for" Expression                                                                                             //
-// Operators          ::= {CallFunction | AssignmentOrChange | Changes | WhileOrIf | '+___-' Operators+ '-___+' | Print | Return} ';)'                  //                              //     
+// Operators          ::= {CallFunction | AssignmentOrChange | Changes | WhileOrIf | '+___-' Operators+ '-___+' | Print | Return | Draw} ';)'           //
 // WhileOrIf          ::= {If | While}                                                                                                                  //
 // While              ::= "I didn't write complaint only because" '*_^' Expression  {[Compares | Equals] Expression}? '^_*' Operators                   //
 // If                 ::= "We resolve conflict if you call chef and check" '*_^' Expression  {[Compares | Equals] Expression}? '^_*' Operators Else?    //
@@ -37,6 +37,7 @@
 //                        "I repeat changes:" Expression '->' Variable                                                                                  //
 // Assignment         ::= "I want to place an order:" Expression '->' Variable                                                                          //
 //                        "I repeat my order:" Expression '->' Variable                                                                                 //
+// Draw               ::= "I want to drawdrawdraw"                                                                                                      //
 // Expression         ::= Term{[+ -]Term}*                                                                                                              //
 // Term               ::= Pow{[* /]Pow}*                                                                                                                //
 // Pow                ::= PrimaryExpression{[^]PrimaryExpression}*                                                                                      //
@@ -46,7 +47,6 @@
 // MathFunction       ::= [ln, sin, cos, tg, ctg, arcsin, arccos, arctg, arcctg, sh, ch, th, cth] '*_^' Expression '^_*'                                //
 // Input              ::= "Bring menu"                                                                                                                  //
 // CallFunction       ::= "Waiter!" Variable '*_^' Variable{'and' Variable}* '^_*'                                                                      //
-// Draw               ::= "I want to drawdrawdraw"                                                                                                      //
 // +++++++++++++++++|||||++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ //
 
 
@@ -291,6 +291,11 @@ Tree_node* LangGetOperators(Language* language, size_t* number_token, Tree_statu
         return operator_node;
     DUMP_CURRENT_SITUATION(operator_node);
 
+    operator_node = LangGetDraw(language, number_token, status);
+    if (operator_node != NULL)
+        return operator_node;
+    DUMP_CURRENT_SITUATION(operator_node); 
+
     Tree_node* cur_token = NULL;
     ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token); // wait +___-
     if (cur_token->type == OPERATOR && cur_token->value.operators == OPERATOR_OPEN_FIGURE) {
@@ -305,10 +310,12 @@ Tree_node* LangGetOperators(Language* language, size_t* number_token, Tree_statu
 
             if (operator_node == NULL)
                 operator_node = operator_node_2;
+            // else if (operator_node != NULL && operator_node->left_node == NULL)
+            //     operator_node->left_node = operator_node_2;
             else if (operator_node != NULL && operator_node->right_node == NULL)
                 operator_node->right_node = operator_node_2;
             else
-                operator_node = NodeCtor(OPERATOR, (type_t){.operators = OPERATOR_COMMON}, operator_node_2, operator_node);
+                operator_node = NodeCtor(OPERATOR, (type_t){.operators = OPERATOR_COMMON}, operator_node, operator_node_2);
 
             DUMP_CURRENT_SITUATION(operator_node);
 
@@ -575,6 +582,26 @@ Tree_node* LangGetAssignmentOrChange(Language* language, size_t* number_token, T
     return NULL;
 }
 
+Tree_node* LangGetDraw(Language* language, size_t* number_token, Tree_status* status) {
+    assert(language);
+    assert(status);
+
+    Tree_node* draw_node = NULL;
+    ArrayGetElement(&(language->array_with_tokens), &draw_node, *number_token);
+    if (draw_node->type != OPERATOR || draw_node->value.operators != OPERATOR_DRAW)
+        return NULL;
+    (*number_token)++;
+
+    Tree_node* cur_token = NULL;
+    ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token);
+    if (cur_token->type == OPERATOR && cur_token->value.operators == OPERATOR_COMMON) {
+        (*number_token)++;
+        cur_token->left_node = draw_node;
+    }     
+
+    return cur_token;
+}
+
 Tree_node* LangGetExpression(Language* language, size_t* number_token, Tree_status* status) {
     assert(language);
     assert(status);
@@ -712,10 +739,6 @@ Tree_node* LangGetPrimaryExpression(Language* language, size_t* number_token, Tr
             return element_node;
 
         element_node = LangGetMathFunction(language, number_token, status);
-        if (element_node != NULL)
-            return element_node;
-
-        element_node = LangGetDraw(language, number_token, status);
         if (element_node != NULL)
             return element_node;
     }
@@ -863,20 +886,4 @@ Tree_node* LangGetCallFuntion(Language* language, size_t* number_token, Tree_sta
     call_node->right_node = param_node;
 
     return call_node;
-}
-
-Tree_node* LangGetDraw(Language* language, size_t* number_token, Tree_status* status) {
-    assert(language);
-    assert(status);
-
-    Tree_node* input_node = NULL;
-    ArrayGetElement(&(language->array_with_tokens), &input_node, *number_token);
-
-    if (input_node->type == OPERATOR && input_node->value.operators == OPERATOR_DRAW) { // wait draw
-        (*number_token)++;
-
-        return input_node;
-    }
-
-    return NULL;
 }

@@ -98,6 +98,7 @@ const char* IndetifySign(Tree_node* tree_node) {
                 case OPERATOR_RETURN:        return "return";
                 case OPERATOR_PARAM:         return ",";
                 case OPERATOR_SQRT:          return "sqrt";
+                case OPERATOR_DRAW:          return "draw";
                 case WRONG_OPERATOR:
                 default: break;
             }

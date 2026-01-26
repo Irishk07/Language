@@ -72,6 +72,7 @@ enum Type_operators {
     OPERATOR_PARAM         = 39,
     OPERATOR_MAIN_FUNCTION = 40,
     OPERATOR_SQRT          = 41,
+    OPERATOR_DRAW          = 42,
     WRONG_OPERATOR
 };
 
@@ -134,7 +135,8 @@ About_function const key_words[] = {
     KEY_WORD("Recipe:",                                        OPERATOR_DEF_FUNCTION,  "func"),
     KEY_WORD("Welcome!",                                       OPERATOR_MAIN_FUNCTION, "main"),
     KEY_WORD("Waiter!",                                        OPERATOR_CALL_FUNCTION, "call"),
-    KEY_WORD("Return the money for",                           OPERATOR_RETURN,        "return")
+    KEY_WORD("Return the money for",                           OPERATOR_RETURN,        "return"),
+    KEY_WORD("I want to drawdrawdraw",                         OPERATOR_DRAW,          "draw")
 };
 
 #undef KEY_WORD

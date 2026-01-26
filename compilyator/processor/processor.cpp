@@ -398,8 +398,6 @@ processor_status do_popmr(Processor* processor) {
 
     processor->ram[processor->registers[reg]] = (int)num;
 
-    // draw_ram(processor);
-
     return PROC_SUCCESS;
 }
 
@@ -430,8 +428,6 @@ processor_status do_popmn(Processor* processor) {
         return PROC_EXPECTS_ARG;
 
     processor->ram[reg] = (int)num;
-
-    // draw_ram(processor);
 
     return PROC_SUCCESS;
 }
@@ -619,7 +615,7 @@ processor_status do_cth(Processor* processor) {
     return PROC_SUCCESS;
 }
 
-void draw_ram(Processor* processor) {
+processor_status draw_ram(Processor* processor) {
     assert(processor);
 
     for (int i = 0; i < SIZE_RAM; ++i) {
@@ -633,6 +629,8 @@ void draw_ram(Processor* processor) {
     }
 
     printf("\n");
+
+    return PROC_SUCCESS;
 }
 
 
