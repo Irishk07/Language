@@ -75,8 +75,10 @@ const char* IndetifySign(Tree_node* tree_node) {
                 case OPERATOR_CH:            return "ch";
                 case OPERATOR_TH:            return "th";
                 case OPERATOR_CTH:           return "cth";
-                case OPERATOR_ASSIGNMENT:    return ":=";
-                case OPERATOR_CHANGE:        return "=";
+                case OPERATOR_ASSIGNMENT:
+                case OPERATOR_C_ASSIGNMENT:  return ":=";
+                case OPERATOR_CHANGE:
+                case OPERATOR_C_CHANGE:      return "=";
                 case OPERATOR_COMMON:        return ";";
                 case OPERATOR_IF:            return "if";
                 case OPERATOR_WHILE:         return "while";

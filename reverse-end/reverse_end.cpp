@@ -36,11 +36,16 @@ Tree_status ReverseEnd(Language* language, const char* programm_file) {
 
     ReadPreOrderTreeFile(language);
 
-    FILE* prog_file = fopen(programm_file, "a");
+    FILE* prog_file = fopen(programm_file, "w");
     if (prog_file == NULL)
         TREE_CHECK_AND_RETURN_ERRORS(OPEN_ERROR);
 
-    CreateProgrammFile(language, language->tree.root, prog_file);
+    TreeHTMLDump(&language->dump_info, &language->array_with_variables, language->tree.root, DUMP_INFO, NOT_ERROR_DUMP);
+
+    int cnt_tabs = 0;
+    CreateProgrammFile(language, language->tree.root, prog_file, &cnt_tabs);
+
+    fprintf(prog_file, "\n\n%s\n", key_words[OPERATOR_FINISH_SYMBOL].name);
 
     if (fclose(prog_file) == EOF)
         TREE_CHECK_AND_RETURN_ERRORS(CLOSE_ERROR);
@@ -48,7 +53,7 @@ Tree_status ReverseEnd(Language* language, const char* programm_file) {
     return SUCCESS;
 }
 
-void CreateProgrammFile(Language* language, Tree_node* tree_node, FILE* prog_file) {
+void CreateProgrammFile(Language* language, Tree_node* tree_node, FILE* prog_file, int* cnt_tabs) {
     assert(language);
     assert(prog_file);
 
@@ -56,35 +61,247 @@ void CreateProgrammFile(Language* language, Tree_node* tree_node, FILE* prog_fil
         return;
 
     if (tree_node->type == NUMBER)
-        fprintf(prog_file, "%d ", tree_node->value.number);
+        fprintf(prog_file, "%d", tree_node->value.number);
     if (tree_node->type == VARIABLE)
-        fprintf(prog_file, "%s ", NameOfVariable(tree_node));              
+        fprintf(prog_file, "%s", NameOfVariable(tree_node));              
 
     if (tree_node->type == OPERATOR) {
-        if (tree_node->value.operators == OPERATOR_CLOSE_FIGURE || tree_node->value.operators == OPERATOR_DEF_FUNCTION)
-            fprintf(prog_file, "\n");
-
-        PrintKeyWord(tree_node, prog_file);
-
-        if (tree_node->value.operators == OPERATOR_OPEN_FIGURE || tree_node->value.operators == OPERATOR_CLOSE_FIGURE)
-            fprintf(prog_file, "\n"); 
+        if (tree_node->value.operators == OPERATOR_COMMON) {
+            CreateProgrammFile(language, tree_node->left_node, prog_file, cnt_tabs);
+            CreateProgrammFile(language, tree_node->right_node, prog_file, cnt_tabs);
+        }    
+        else
+            key_words[tree_node->value.operators].function(language, tree_node, prog_file, cnt_tabs);
     }
-
-    CreateProgrammFile(language, tree_node->left_node, prog_file);
-    CreateProgrammFile(language, tree_node->right_node, prog_file);
 }
 
-void PrintKeyWord(Tree_node* tree_node, FILE* prog_file) {
+#define TABS                      \
+    int temp_tabs = *cnt_tabs;    \
+    while (temp_tabs-- > 0)       \
+        fprintf(prog_file, "\t");
+
+#define TABS_REPEAT               \
+    temp_tabs = *cnt_tabs;        \
+    while (temp_tabs-- > 0)       \
+        fprintf(prog_file, "\t");
+
+void do_math_operations(Language* language, Tree_node* tree_node, FILE* prog_file, int* cnt_tabs) {
+    assert(language);
     assert(tree_node);
+    assert(prog_file);
 
-    unsigned long hash = hash_djb2(NameOfVariable(tree_node));
+    CreateProgrammFile(language, tree_node->left_node, prog_file, cnt_tabs);
+    fprintf(prog_file, " %s ", key_words[tree_node->value.operators].name);
+    CreateProgrammFile(language, tree_node->right_node, prog_file, cnt_tabs);
+}
 
-    for (size_t i = 0; i < sizeof(key_words) / sizeof(key_words[0]); ++i) {
-        if (hash == key_words[i].tree_hash && strcmp(NameOfVariable(tree_node), key_words[i].tree_name) == 0) {
-            fprintf(prog_file, "%s \n", NameOfVariable(tree_node));
-        }
+void do_math_functions(Language* language, Tree_node* tree_node, FILE* prog_file, int* cnt_tabs) {
+    assert(language);
+    assert(tree_node);
+    assert(prog_file);
+
+    fprintf(prog_file, "%s *_^ ", key_words[tree_node->value.operators].name);
+    CreateProgrammFile(language, tree_node->left_node, prog_file, cnt_tabs);
+    fprintf(prog_file, " ^_*");
+}
+
+void do_if(Language* language, Tree_node* tree_node, FILE* prog_file, int* cnt_tabs) {
+    assert(language);
+    assert(tree_node);
+    assert(prog_file);
+
+    fprintf(prog_file, "\n");
+    TABS;
+
+    fprintf(prog_file, "%s *_^ ", key_words[tree_node->value.operators].name);
+    CreateProgrammFile(language, tree_node->left_node, prog_file, cnt_tabs);
+    fprintf(prog_file, " ^_* +___-\n");
+
+    Tree_node* right_node = tree_node->right_node;
+    if (right_node->type == OPERATOR && right_node->value.operators == OPERATOR_ELSE) {
+        Tree_node* else_node = right_node;
+
+        (*cnt_tabs)++;
+        CreateProgrammFile(language, else_node->left_node, prog_file, cnt_tabs);
+        
+        (*cnt_tabs)--;
+        TABS_REPEAT;
+        fprintf(prog_file, "-___+\n");
+
+        do_else(language, else_node, prog_file, cnt_tabs);
+    }
+    else {
+        (*cnt_tabs)++;
+        CreateProgrammFile(language, tree_node->right_node, prog_file, cnt_tabs);
+
+        (*cnt_tabs)--;
+        TABS_REPEAT;
+        fprintf(prog_file, "-___+\n");
     }
 }
+
+void do_else(Language* language, Tree_node* tree_node, FILE* prog_file, int* cnt_tabs) {
+    assert(language);
+    assert(tree_node);
+    assert(prog_file);
+
+    TABS;
+
+    fprintf(prog_file, "%s +___-\n", key_words[tree_node->value.operators].name);
+
+    (*cnt_tabs)++;
+    CreateProgrammFile(language, tree_node->right_node, prog_file, cnt_tabs);
+
+    (*cnt_tabs)--;
+    TABS_REPEAT;
+    fprintf(prog_file, "-___+\n");
+}
+
+void do_while(Language* language, Tree_node* tree_node, FILE* prog_file, int* cnt_tabs) {
+    assert(language);
+    assert(tree_node);
+    assert(prog_file);
+
+    fprintf(prog_file, "\n");
+    TABS;
+
+    fprintf(prog_file, "%s *_^ ", key_words[tree_node->value.operators].name);
+    CreateProgrammFile(language, tree_node->left_node, prog_file, cnt_tabs);
+    fprintf(prog_file, " ^_* +___-\n");
+
+    (*cnt_tabs)++;
+    CreateProgrammFile(language, tree_node->right_node, prog_file, cnt_tabs);
+
+    (*cnt_tabs)--;
+    TABS_REPEAT;
+    fprintf(prog_file, "-___+\n");
+}
+
+void do_print(Language* language, Tree_node* tree_node, FILE* prog_file, int* cnt_tabs) {
+    assert(language);
+    assert(tree_node);
+    assert(prog_file);
+
+    TABS;
+
+    fprintf(prog_file, "%s *_^ ", key_words[tree_node->value.operators].name);
+    CreateProgrammFile(language, tree_node->left_node, prog_file, cnt_tabs);
+    fprintf(prog_file, " ^_* %s\n", key_words[OPERATOR_COMMON].name);
+}
+
+void do_input(Language* language, Tree_node* tree_node, FILE* prog_file, int*) {
+    assert(language);
+    assert(tree_node);
+    assert(prog_file);
+
+    fprintf(prog_file, "%s", key_words[tree_node->value.operators].name);
+}
+
+void do_draw(Language* language, Tree_node* tree_node, FILE* prog_file, int* cnt_tabs) {
+    assert(language);
+    assert(tree_node);
+    assert(prog_file);
+
+    fprintf(prog_file, "\n");
+    TABS;
+
+    fprintf(prog_file, "%s %s\n", key_words[tree_node->value.operators].name, key_words[OPERATOR_COMMON].name);
+}
+
+void do_assignment_change(Language* language, Tree_node* tree_node, FILE* prog_file, int* cnt_tabs) {
+    assert(language);
+    assert(tree_node);
+    assert(prog_file);
+
+    fprintf(prog_file, "\n");
+    TABS;
+
+    fprintf(prog_file, "%s ", key_words[tree_node->value.operators].name);
+    CreateProgrammFile(language, tree_node->right_node, prog_file, cnt_tabs);
+    fprintf(prog_file, " -> ");
+    CreateProgrammFile(language, tree_node->left_node, prog_file, cnt_tabs);
+    fprintf(prog_file, " %s\n", key_words[OPERATOR_COMMON].name);
+
+    TABS_REPEAT;
+
+    if (tree_node->value.operators == OPERATOR_ASSIGNMENT)
+        fprintf(prog_file, "%s ", key_words[OPERATOR_C_ASSIGNMENT].name);
+    else
+        fprintf(prog_file, "%s ", key_words[OPERATOR_C_CHANGE].name);
+    CreateProgrammFile(language, tree_node->right_node, prog_file, cnt_tabs);
+    fprintf(prog_file, " -> ");
+    CreateProgrammFile(language, tree_node->left_node, prog_file, cnt_tabs);
+    fprintf(prog_file, " %s\n", key_words[OPERATOR_COMMON].name);
+}
+
+void do_def_func(Language* language, Tree_node* tree_node, FILE* prog_file, int* cnt_tabs) {
+    assert(language);
+    assert(tree_node);
+    assert(prog_file);
+
+    (*cnt_tabs) = 0;
+
+    Tree_node* param_node = tree_node->left_node;
+    Tree_node* func_name = param_node->left_node;
+    fprintf(prog_file, "\n\n%s ", key_words[tree_node->value.operators].name);
+    fprintf(prog_file, "%s *_^ ", NameOfVariable(func_name));
+
+    while (param_node->right_node->type == OPERATOR) {
+        param_node = param_node->right_node;
+        fprintf(prog_file, "%s and ", NameOfVariable(param_node->left_node));
+    }
+    fprintf(prog_file, "%s", NameOfVariable(param_node->right_node));
+    fprintf(prog_file, "^_* +___-\n");
+
+    (*cnt_tabs)++;
+    CreateProgrammFile(language, tree_node->right_node, prog_file, cnt_tabs);
+    fprintf(prog_file, "-___+\n");
+}
+
+void do_main_func(Language* language, Tree_node* tree_node, FILE* prog_file, int* cnt_tabs) {
+    assert(language);
+    assert(tree_node);
+    assert(prog_file);
+
+    (*cnt_tabs) = 0;
+
+    Tree_node* func_name = tree_node->left_node;
+    fprintf(prog_file, "%s %s +___-\n", key_words[tree_node->value.operators].name, NameOfVariable(func_name));
+
+    (*cnt_tabs)++;
+    CreateProgrammFile(language, tree_node->right_node, prog_file, cnt_tabs);
+    fprintf(prog_file, "-___+\n");
+}
+
+void do_call_func(Language* language, Tree_node* tree_node, FILE* prog_file, int*) {
+    assert(language);
+    assert(tree_node);
+    assert(prog_file);
+
+    Tree_node* func_name = tree_node->left_node;
+    fprintf(prog_file, "%s %s *_^ ", key_words[tree_node->value.operators].name, NameOfVariable(func_name));
+    
+    Tree_node* param_node = tree_node->right_node;
+    while (param_node->right_node->type == OPERATOR) {
+        param_node = param_node->right_node;
+        fprintf(prog_file, "%s and ", NameOfVariable(param_node->left_node));
+    }
+    fprintf(prog_file, "%s ", NameOfVariable(param_node->right_node));
+    fprintf(prog_file, "^_*");
+}
+
+void do_return(Language* language, Tree_node* tree_node, FILE* prog_file, int* cnt_tabs) {
+    assert(language);
+    assert(tree_node);
+    assert(prog_file);
+
+    TABS;
+
+    fprintf(prog_file, "%s ", key_words[tree_node->value.operators].name);
+    CreateProgrammFile(language, tree_node->left_node, prog_file, cnt_tabs);
+    fprintf(prog_file, " %s\n", key_words[OPERATOR_COMMON].name);
+}
+
 
 Tree_status ReadPreOrderTreeFile(Language* language) {
     assert(language);
@@ -92,7 +309,6 @@ Tree_status ReadPreOrderTreeFile(Language* language) {
     TREE_CHECK_AND_RETURN_ERRORS(ReadOnegin(language, language->tree_file));
 
     char* begin_buffer = language->begin_buffer;
-    fprintf(stderr, "'%s'\n", begin_buffer);
 
     TREE_CHECK_AND_RETURN_ERRORS(ReadPreOrderNode(language, &language->tree.root, &begin_buffer));
 

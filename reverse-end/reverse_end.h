@@ -19,9 +19,7 @@ Tree_status LanguageCtor(Language* language, const char* html_dump_filename, con
 
 Tree_status ReverseEnd(Language* language, const char* programm_file);
 
-void CreateProgrammFile(Language* language, Tree_node* tree_node, FILE* prog_file);
-
-void PrintKeyWord(Tree_node* tree_node, FILE* prog_file);
+void CreateProgrammFile(Language* language, Tree_node* tree_node, FILE* prog_file, int* cnt_tabs);
 
 Tree_status ReadPreOrderTreeFile(Language* language);
 

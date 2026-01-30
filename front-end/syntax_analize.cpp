@@ -486,8 +486,21 @@ Tree_node* CheckEqualAssignmentOrChange(Language* language, size_t* number_token
     assert(language);
     assert(status);
 
-    Tree_node* first_node = LangGetAssignmentOrChange(language, number_token, status);
-    Tree_node* second_node = LangGetAssignmentOrChange(language, number_token, status);
+    Tree_node* cur_token = NULL;
+    ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token); // wait = or :=
+
+    Tree_node* first_node = NULL;
+    if (cur_token->type == OPERATOR && 
+        (cur_token->value.operators == OPERATOR_ASSIGNMENT || cur_token->value.operators == OPERATOR_CHANGE))
+        first_node = LangGetAssignmentOrChange(language, number_token, status);
+
+    Tree_node* cur_token_2 = NULL;
+    ArrayGetElement(&(language->array_with_tokens), &cur_token_2, *number_token);
+
+    Tree_node* second_node = NULL;
+    if (cur_token_2->type == OPERATOR && 
+        (cur_token_2->value.operators == OPERATOR_C_ASSIGNMENT || cur_token_2->value.operators == OPERATOR_C_CHANGE))
+        second_node = LangGetAssignmentOrChange(language, number_token, status);
 
     DUMP_CURRENT_SITUATION(first_node);
     DUMP_CURRENT_SITUATION(second_node);
@@ -501,6 +514,45 @@ Tree_node* CheckEqualAssignmentOrChange(Language* language, size_t* number_token
     LanguageNodeDtor(language, second_node);
 
     return first_node;
+}
+
+Tree_node* LangGetAssignmentOrChange(Language* language, size_t* number_token, Tree_status* status) {
+    assert(language);
+    assert(status);
+
+    Tree_node* cur_token = NULL;
+    ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token); // here = or :=
+    (*number_token)++;
+
+    Tree_node* expression_node = LangGetExpression(language, number_token, status);
+    Tree_node* equal_node      = cur_token;
+
+    DUMP_CURRENT_SITUATION(expression_node);
+
+    ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token);
+    if (cur_token->type != OPERATOR || cur_token->value.operators != OPERATOR_MATCH)
+        return NULL;
+    (*number_token)++;
+    free(cur_token);
+
+    Tree_node* variable_node = LangGetVariable(language, number_token, status);
+    if (variable_node == NULL)
+        return NULL;
+
+    ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token); // wait ;
+    if ((cur_token->type == OPERATOR && cur_token->value.operators == OPERATOR_COMMON) == 0)
+        return NULL;
+
+    (*number_token)++;
+
+    equal_node->left_node  = variable_node;
+    equal_node->right_node = expression_node;
+
+    cur_token->left_node   = equal_node; // left_node of node with ;
+
+    DUMP_CURRENT_SITUATION(variable_node);
+
+    return cur_token;
 }
 
 Status_of_comparing CompareTrees(Tree_node* tree_node_1, Tree_node* tree_node_2) {
@@ -524,8 +576,15 @@ Status_of_comparing CompareTrees(Tree_node* tree_node_1, Tree_node* tree_node_2)
             return DIFFERENT;
     } 
     else if (type_node == OPERATOR) {
-        if (tree_node_1->value.operators != tree_node_2->value.operators)
+        if (tree_node_1->value.operators != OPERATOR_ASSIGNMENT && tree_node_1->value.operators != OPERATOR_CHANGE &&
+            tree_node_1->value.operators != tree_node_2->value.operators)
             return DIFFERENT;
+
+        if (tree_node_1->value.operators == OPERATOR_ASSIGNMENT || tree_node_1->value.operators == OPERATOR_CHANGE) {
+            if (((tree_node_1->value.operators == OPERATOR_ASSIGNMENT && tree_node_2->value.operators == OPERATOR_C_ASSIGNMENT) ||
+                  (tree_node_1->value.operators == OPERATOR_CHANGE && tree_node_2->value.operators == OPERATOR_C_CHANGE)) == 0)
+            return DIFFERENT;
+        }
     } 
 
     Status_of_comparing status_compare_left_parents  = CompareTrees(tree_node_1->left_node, tree_node_2->left_node);
@@ -535,51 +594,6 @@ Status_of_comparing CompareTrees(Tree_node* tree_node_1, Tree_node* tree_node_2)
         return DIFFERENT;
     
     return EQUAL;
-}
-
-Tree_node* LangGetAssignmentOrChange(Language* language, size_t* number_token, Tree_status* status) {
-    assert(language);
-    assert(status);
-
-    Tree_node* cur_token = NULL;
-    ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token); // wait = or :=
-
-    if (cur_token->type == OPERATOR && 
-        (cur_token->value.operators == OPERATOR_ASSIGNMENT || cur_token->value.operators == OPERATOR_CHANGE)) {
-        (*number_token)++;
-
-        Tree_node* expression_node = LangGetExpression(language, number_token, status);
-        Tree_node* equal_node      = cur_token;
-
-        DUMP_CURRENT_SITUATION(expression_node);
-
-        ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token);
-        if (cur_token->type != OPERATOR || cur_token->value.operators != OPERATOR_MATCH)
-            return NULL;
-        (*number_token)++;
-        free(cur_token);
-
-        Tree_node* variable_node = LangGetVariable(language, number_token, status);
-        if (variable_node == NULL)
-            return NULL;
-
-        ArrayGetElement(&(language->array_with_tokens), &cur_token, *number_token); // wait ;
-        if ((cur_token->type == OPERATOR && cur_token->value.operators == OPERATOR_COMMON) == 0)
-            return NULL;
-
-        (*number_token)++;
-
-        equal_node->left_node  = variable_node;
-        equal_node->right_node = expression_node;
-
-        cur_token->left_node   = equal_node; // left_node of node with ;
-
-        DUMP_CURRENT_SITUATION(variable_node);
-
-        return cur_token;
-    }
-
-    return NULL;
 }
 
 Tree_node* LangGetDraw(Language* language, size_t* number_token, Tree_status* status) {

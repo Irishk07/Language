@@ -17,6 +17,12 @@
 #define DUMP_INFO __LINE__, __FILE__
 #define NOT_ERROR_DUMP USUAL_DUMP, SUCCESS
 
+#ifdef REVERSE
+#define IF_REVERSE(...) __VA_ARGS__
+#else
+#define IF_REVERSE(...)
+#endif // REVERSE
+
 
 const int CNT_ATTEMPTS  = 5;
 const int DEFAULT_VALUE = 666;
@@ -30,51 +36,56 @@ enum Type_node {
 };
 
 enum Type_operators {
-    OPERATOR_ADD           = 0,
-    OPERATOR_SUB           = 1,
-    OPERATOR_MUL           = 2,
-    OPERATOR_DIV           = 3,
-    OPERATOR_POW           = 4,
-    OPERATOR_LN            = 5,
-    OPERATOR_LOG           = 6,
-    OPERATOR_SIN           = 7,
-    OPERATOR_COS           = 8,
-    OPERATOR_TG            = 9,
-    OPERATOR_CTG           = 10,
-    OPERATOR_ARCSIN        = 11,
-    OPERATOR_ARCCOS        = 12,
-    OPERATOR_ARCTG         = 13,
-    OPERATOR_ARCCTG        = 14,
-    OPERATOR_SH            = 15,  
-    OPERATOR_CH            = 16,  
-    OPERATOR_TH            = 17,  
-    OPERATOR_CTH           = 18, 
-    OPERATOR_ASSIGNMENT    = 19,
-    OPERATOR_COMMON        = 20,
-    OPERATOR_IF            = 21,
-    OPERATOR_WHILE         = 22,
-    OPERATOR_OPEN_BRACKET  = 23,
-    OPERATOR_CLOSE_BRACKET = 24,
-    OPERATOR_OPEN_FIGURE   = 25,
-    OPERATOR_CLOSE_FIGURE  = 26,
-    OPERATOR_FINISH_SYMBOL = 27,
-    OPERATOR_ELSE          = 28,
-    OPERATOR_CHANGE        = 29,
-    OPERATOR_INPUT         = 30,
-    OPERATOR_PRINT         = 31,
-    OPERATOR_BEFORE        = 32,
-    OPERATOR_ABOVE         = 33,
-    OPERATOR_EQUAL         = 34,
-    OPERATOR_MATCH         = 35,
-    OPERATOR_DEF_FUNCTION  = 36,
-    OPERATOR_CALL_FUNCTION = 37,
-    OPERATOR_RETURN        = 38,
-    OPERATOR_PARAM         = 39,
-    OPERATOR_MAIN_FUNCTION = 40,
-    OPERATOR_SQRT          = 41,
-    OPERATOR_DRAW          = 42,
+    OPERATOR_COMMON        = 0,
+    OPERATOR_OPEN_BRACKET  = 1,
+    OPERATOR_CLOSE_BRACKET = 2,
+    OPERATOR_OPEN_FIGURE   = 3,
+    OPERATOR_CLOSE_FIGURE  = 4,
+    OPERATOR_MATCH         = 5,
+    OPERATOR_ADD           = 6,
+    OPERATOR_SUB           = 7,
+    OPERATOR_DIV           = 8,
+    OPERATOR_MUL           = 9,
+    OPERATOR_POW           = 10,
+    OPERATOR_BEFORE        = 11,
+    OPERATOR_ABOVE         = 12,
+    OPERATOR_EQUAL         = 13,
+    OPERATOR_LN            = 14,
+    OPERATOR_LOG           = 15,  
+    OPERATOR_SIN           = 16,  
+    OPERATOR_COS           = 17,  
+    OPERATOR_TG            = 18, 
+    OPERATOR_CTG           = 19,
+    OPERATOR_ARCSIN        = 20,
+    OPERATOR_ARCCOS        = 21,
+    OPERATOR_ARCTG         = 22,
+    OPERATOR_ARCCTG        = 23,
+    OPERATOR_SH            = 24,
+    OPERATOR_CH            = 25,
+    OPERATOR_TH            = 26,
+    OPERATOR_CTH           = 27,
+    OPERATOR_SQRT          = 28,
+    OPERATOR_FINISH_SYMBOL = 29,
+    OPERATOR_PARAM         = 30,
+    OPERATOR_IF            = 31,
+    OPERATOR_ELSE          = 32,
+    OPERATOR_WHILE         = 33,
+    OPERATOR_INPUT         = 34,
+    OPERATOR_PRINT         = 35,
+    OPERATOR_ASSIGNMENT    = 36,
+    OPERATOR_C_ASSIGNMENT  = 37,
+    OPERATOR_CHANGE        = 38,
+    OPERATOR_C_CHANGE      = 39,
+    OPERATOR_DEF_FUNCTION  = 40,
+    OPERATOR_MAIN_FUNCTION = 41,
+    OPERATOR_CALL_FUNCTION = 42,
+    OPERATOR_RETURN        = 43,
+    OPERATOR_DRAW          = 44,
     WRONG_OPERATOR
 };
+
+struct Language;
+struct Tree_node;
 
 struct About_function {
     const char* name;
@@ -82,61 +93,76 @@ struct About_function {
     unsigned long hash;
     const char* tree_name;
     unsigned long tree_hash;
+    IF_REVERSE(void (*function) (Language* language, Tree_node* tree_node, FILE* prog_file, int* cnt_tabs));
 };
- 
+
 unsigned long hash_djb2(const char *str);
 
+void do_math_operations(Language* language, Tree_node* tree_node, FILE* prog_file, int* cnt_tabs);
+void do_math_functions(Language* language, Tree_node* tree_node, FILE* prog_file, int* cnt_tabs);
+void do_if(Language* language, Tree_node* tree_node, FILE* prog_file, int* cnt_tabs);
+void do_else(Language* language, Tree_node* tree_node, FILE* prog_file, int* cnt_tabs);
+void do_while(Language* language, Tree_node* tree_node, FILE* prog_file, int* cnt_tabs);
+void do_print(Language* language, Tree_node* tree_node, FILE* prog_file, int* cnt_tabs);
+void do_input(Language* language, Tree_node* tree_node, FILE* prog_file, int* cnt_tabs);
+void do_draw(Language* language, Tree_node* tree_node, FILE* prog_file, int* cnt_tabs);
+void do_assignment_change(Language* language, Tree_node* tree_node, FILE* prog_file, int* cnt_tabs);
+void do_def_func(Language* language, Tree_node* tree_node, FILE* prog_file, int* cnt_tabs);
+void do_main_func(Language* language, Tree_node* tree_node, FILE* prog_file, int* cnt_tabs);
+void do_call_func(Language* language, Tree_node* tree_node, FILE* prog_file, int* cnt_tabs);
+void do_return(Language* language, Tree_node* tree_node, FILE* prog_file, int* cnt_tabs);
 
-#define KEY_WORD(command_name, command_type, command_tree_name)                   \
+#define KEY_WORD(command_name, command_type, command_tree_name, command_function) \
     {.name = command_name, .type = command_type, .hash = hash_djb2(command_name), \
-     .tree_name = command_tree_name, .tree_hash = hash_djb2(command_tree_name)}
+     .tree_name = command_tree_name, .tree_hash = hash_djb2(command_tree_name)    \
+     IF_REVERSE(, .function = command_function)}
 
 About_function const key_words[] = {
-    KEY_WORD("<3",     OPERATOR_COMMON,        ";"),
-    KEY_WORD("*_^",    OPERATOR_OPEN_BRACKET,  "("),
-    KEY_WORD("^_*",    OPERATOR_CLOSE_BRACKET, ")"),
-    KEY_WORD("+___-",  OPERATOR_OPEN_FIGURE,   "{"),
-    KEY_WORD("-___+",  OPERATOR_CLOSE_FIGURE,  "}"),
-    KEY_WORD("->",     OPERATOR_MATCH,         "->"),
-    KEY_WORD("+",      OPERATOR_ADD,           "+"),
-    KEY_WORD("-",      OPERATOR_SUB,           "-"),
-    KEY_WORD("/",      OPERATOR_DIV,           "/"),
-    KEY_WORD("*",      OPERATOR_MUL,           "*"),
-    KEY_WORD("^",      OPERATOR_POW,           "^"),
-    KEY_WORD("<",      OPERATOR_BEFORE,        "<"),
-    KEY_WORD(">",      OPERATOR_ABOVE,         ">"),
-    KEY_WORD("==",     OPERATOR_EQUAL,         "=="),
-    KEY_WORD("ln",     OPERATOR_LN,            "ln"),
-    KEY_WORD("log",    OPERATOR_LOG,           "log"),
-    KEY_WORD("sin",    OPERATOR_SIN,           "sin"),
-    KEY_WORD("cos",    OPERATOR_COS,           "cos"),
-    KEY_WORD("tg",     OPERATOR_TG,            "tg"),
-    KEY_WORD("ctg",    OPERATOR_CTG,           "ctg"),
-    KEY_WORD("arcsin", OPERATOR_ARCSIN,        "arcsin"),
-    KEY_WORD("arccos", OPERATOR_ARCCOS,        "arccos"),
-    KEY_WORD("arctg",  OPERATOR_ARCTG,         "arctg"),
-    KEY_WORD("arcctg", OPERATOR_ARCCTG,        "arcctg"),
-    KEY_WORD("sh",     OPERATOR_SH,            "sh"),
-    KEY_WORD("ch",     OPERATOR_CH,            "ch"),
-    KEY_WORD("th",     OPERATOR_TH,            "th"),
-    KEY_WORD("cth",    OPERATOR_CTH,           "cth"),
-    KEY_WORD("sqrt",   OPERATOR_SQRT,          "sqrt"),
-    KEY_WORD("Bye",    OPERATOR_FINISH_SYMBOL, "$"),
-    KEY_WORD("and",    OPERATOR_PARAM,         ","),
-    KEY_WORD("We resolve conflict if you call chef and check", OPERATOR_IF,            "if"),
-    KEY_WORD("We won't resolve conflict. But",                 OPERATOR_ELSE,          "else"),
-    KEY_WORD("I didn't write complaint only because",          OPERATOR_WHILE,         "while"),
-    KEY_WORD("Bring menu",                                     OPERATOR_INPUT,         "input"),
-    KEY_WORD("Calculate how much dish",                        OPERATOR_PRINT,         "print"),
-    KEY_WORD("I want to place an order:",                      OPERATOR_ASSIGNMENT,    ":="),
-    KEY_WORD("I repeat my order:",                             OPERATOR_ASSIGNMENT,    ":="),
-    KEY_WORD("I want to change my order:",                     OPERATOR_CHANGE,        "="),
-    KEY_WORD("I repeat changes:",                              OPERATOR_CHANGE,        "="),
-    KEY_WORD("Recipe:",                                        OPERATOR_DEF_FUNCTION,  "func"),
-    KEY_WORD("Welcome!",                                       OPERATOR_MAIN_FUNCTION, "main"),
-    KEY_WORD("Waiter!",                                        OPERATOR_CALL_FUNCTION, "call"),
-    KEY_WORD("Return the money for",                           OPERATOR_RETURN,        "return"),
-    KEY_WORD("I want to drawdrawdraw",                         OPERATOR_DRAW,          "draw")
+    KEY_WORD("<3",     OPERATOR_COMMON,        ";", NULL),
+    KEY_WORD("*_^",    OPERATOR_OPEN_BRACKET,  "(", NULL),
+    KEY_WORD("^_*",    OPERATOR_CLOSE_BRACKET, ")", NULL),
+    KEY_WORD("+___-",  OPERATOR_OPEN_FIGURE,   "{", NULL),
+    KEY_WORD("-___+",  OPERATOR_CLOSE_FIGURE,  "}", NULL),
+    KEY_WORD("->",     OPERATOR_MATCH,         "->", NULL),
+    KEY_WORD("+",      OPERATOR_ADD,           "+", &do_math_operations),
+    KEY_WORD("-",      OPERATOR_SUB,           "-", &do_math_operations),
+    KEY_WORD("/",      OPERATOR_DIV,           "/", &do_math_operations),
+    KEY_WORD("*",      OPERATOR_MUL,           "*", &do_math_operations),
+    KEY_WORD("^",      OPERATOR_POW,           "^", &do_math_operations),
+    KEY_WORD("<",      OPERATOR_BEFORE,        "<", &do_math_operations),
+    KEY_WORD(">",      OPERATOR_ABOVE,         ">", &do_math_operations),
+    KEY_WORD("==",     OPERATOR_EQUAL,         "==", &do_math_operations),
+    KEY_WORD("ln",     OPERATOR_LN,            "ln", &do_math_functions),
+    KEY_WORD("log",    OPERATOR_LOG,           "log", &do_math_functions),
+    KEY_WORD("sin",    OPERATOR_SIN,           "sin", &do_math_functions),
+    KEY_WORD("cos",    OPERATOR_COS,           "cos", &do_math_functions),
+    KEY_WORD("tg",     OPERATOR_TG,            "tg", &do_math_functions),
+    KEY_WORD("ctg",    OPERATOR_CTG,           "ctg", &do_math_functions),
+    KEY_WORD("arcsin", OPERATOR_ARCSIN,        "arcsin", &do_math_functions),
+    KEY_WORD("arccos", OPERATOR_ARCCOS,        "arccos", &do_math_functions),
+    KEY_WORD("arctg",  OPERATOR_ARCTG,         "arctg", &do_math_functions),
+    KEY_WORD("arcctg", OPERATOR_ARCCTG,        "arcctg", &do_math_functions),
+    KEY_WORD("sh",     OPERATOR_SH,            "sh", &do_math_functions),
+    KEY_WORD("ch",     OPERATOR_CH,            "ch", &do_math_functions),
+    KEY_WORD("th",     OPERATOR_TH,            "th", &do_math_functions),
+    KEY_WORD("cth",    OPERATOR_CTH,           "cth", &do_math_functions),
+    KEY_WORD("sqrt",   OPERATOR_SQRT,          "sqrt", &do_math_functions),
+    KEY_WORD("Bye",    OPERATOR_FINISH_SYMBOL, "$", NULL),
+    KEY_WORD("and",    OPERATOR_PARAM,         ",", NULL),
+    KEY_WORD("We resolve conflict if you call chef and check", OPERATOR_IF,            "if", &do_if),
+    KEY_WORD("We won't resolve conflict. But",                 OPERATOR_ELSE,          "else", &do_else),
+    KEY_WORD("I didn't write complaint only because",          OPERATOR_WHILE,         "while", &do_while),
+    KEY_WORD("Bring menu",                                     OPERATOR_INPUT,         "input", &do_input),
+    KEY_WORD("Calculate how much dish",                        OPERATOR_PRINT,         "print", &do_print),
+    KEY_WORD("I want to place an order:",                      OPERATOR_ASSIGNMENT,    ":=", &do_assignment_change),
+    KEY_WORD("I repeat my order:",                             OPERATOR_C_ASSIGNMENT,  ":=", &do_assignment_change),
+    KEY_WORD("I want to change my order:",                     OPERATOR_CHANGE,        "=", &do_assignment_change),
+    KEY_WORD("I repeat changes:",                              OPERATOR_C_CHANGE,      "=", &do_assignment_change),
+    KEY_WORD("Recipe:",                                        OPERATOR_DEF_FUNCTION,  "func", &do_def_func),
+    KEY_WORD("Welcome!",                                       OPERATOR_MAIN_FUNCTION, "main", &do_main_func),
+    KEY_WORD("Waiter!",                                        OPERATOR_CALL_FUNCTION, "call", &do_call_func),
+    KEY_WORD("Return the money for",                           OPERATOR_RETURN,        "return", &do_return),
+    KEY_WORD("I want to drawdrawdraw",                         OPERATOR_DRAW,          "draw", &do_draw)
 };
 
 #undef KEY_WORD
