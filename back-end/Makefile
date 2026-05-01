@@ -15,7 +15,7 @@ null,object-size,return,returns-nonnull-attribute,shift,signed-integer-overflow,
 
 CPPFLAGS += $(SANITIZER_FLAGS)
 
-CPPSRC := main.cpp back_end.cpp onegin.cpp
+CPPSRC := main.cpp back_end.cpp back_end_x86.cpp onegin.cpp common_back.cpp
 CPPSRC_COMMON := ../array.cpp ../common.cpp ../string_functions.cpp ../tree.cpp
 
 CPPOBJ := $(CPPSRC:%.cpp=build/%.o) 
@@ -36,6 +36,14 @@ back_end_prog: $(CPPOBJ) $(CPPOBJ_COMMON)
 	@$(CXX) $^ -o $@ $(CPPFLAGS)
 
 -include $(HEADER_DEPENDS)
+
+.PHONY: run_asm
+run_asm:
+	@./back_end_prog ../tree.txt asm_x86.asm dump.html dump
+	@nasm -f elf64 -g asm_x86.asm -o asm_x86.o
+	@gcc -g -no-pie asm_x86.o -o asm_x86
+	@./asm_x86
+	
 
 .PHONY: clean
 clean:
