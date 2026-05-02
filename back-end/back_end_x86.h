@@ -21,6 +21,7 @@
 #define MOV_FORMAT_OUT_(reg)   fprintf(asm_file, "    mov " #reg ", format_out\n");
 #define MOVQ_R_M_(xmm, addr)   fprintf(asm_file, "    movq " #xmm ", [" #addr "]\n");
 #define MOVZX_R1_R2_(reg1, reg2)  fprintf(asm_file, "    movzx " #reg1 ", " #reg2 "\n");
+#define MOVZX_R_M_(reg1, reg2) fprintf(asm_file, "    movzx " #reg1 ", byte [" #reg2 "]\n");
 #define MOVSXD_R1_R2_(reg1, reg2) fprintf(asm_file, "    movsxd " #reg1 ", " #reg2 "\n");
 
 #define LEA_R_M_(reg, addr)    fprintf(asm_file, "    lea " #reg " , [" #addr "]\n");
@@ -36,6 +37,8 @@
 #define IDIV_R_(reg)           fprintf(asm_file, "    idiv " #reg "\n");
 #define DIV_R_(reg)            fprintf(asm_file, "    div " #reg "\n");
 
+#define IMUL_R_NUM_(reg, num)  fprintf(asm_file, "    imul " #reg ", %d\n", (num));
+
 #define CMP_R1_R2_(reg1, reg2) fprintf(asm_file, "    cmp " #reg1 ", " #reg2 "\n");
 #define CMP_R_NUM_(reg, num)   fprintf(asm_file, "    cmp " #reg ", %d\n", (num));
 #define CMP_R_CHAR(reg, symb)  fprintf(asm_file, "    cmp " #reg ", " #symb "\n");
@@ -49,10 +52,10 @@
 #define ROL_R1_R2_(reg1, reg2) fprintf(asm_file, "    rol " #reg1 ", " #reg2 "\n");
 
 #define CALL_(func)            fprintf(asm_file, "    call %s\n\n", func);
-#define CALL_SCANF_            fprintf(asm_file, "    call scanf wrt ..plt\n");
+#define CALL_SCANF_            fprintf(asm_file, "    call my_scanf\n");
 #define CALL_PRINTF_           fprintf(asm_file, "    call my_printf\n");
 #define SYSCALL_               fprintf(asm_file, "    syscall\n");
-#define RET_                   fprintf(asm_file, "    ret\n");
+#define RET_                   fprintf(asm_file, "    ret\n\n");
 #define LABEL_(label)          fprintf(asm_file, "." #label ":\n");
 #define TO_LABEL_(label)       fprintf(asm_file, "." #label "\n");
 #define FUNC_(func)            fprintf(asm_file, #func ":\n");
@@ -103,7 +106,8 @@
                                                   "    BUF_CAPACITY equ 1024\n\n"                                       \
                                                   "    buf resb BUF_CAPACITY                     ; reserve 1024 bytes\n"\
                                                   "    buf_len resq 1\n"                                                \
-                                                  "    xmm_save resq 8\n\n");
+                                                  "    xmm_save resq 8\n"                                               \
+                                                  "    buffer resb 32\n\n");
 
 #define MACRO_                  fprintf(asm_file, "%%macro SAVE_IN_STACK 2\n"                                           \
                                                   "    mov [rbp - 8 * %%2], %%1\n"                                      \
@@ -148,6 +152,8 @@ void PrintCallFunctionX86(Language* language, Tree_node* tree_node, FILE* asm_fi
 void PrintReturnFunctionX86(Language* language, Tree_node* tree_node, FILE* asm_file);
 
 void PrintFuncMyPrintf(Language* language, FILE* asm_file);
+
+void PrintFuncMyScanf(Language* language, FILE* asm_file);
 
 
 #endif // BACK_END_X86_H_

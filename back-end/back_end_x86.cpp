@@ -26,8 +26,7 @@ Tree_status BackEndX86(Language* language, const char* name_asm_file) {
     if (asm_file == NULL)
         TREE_CHECK_AND_RETURN_ERRORS(OPEN_ERROR);
 
-    fprintf(asm_file, "default rel\n\n"
-                      "extern scanf\n\n");
+    fprintf(asm_file, "default rel\n\n");
 
     SECTION_DATA_
 
@@ -41,6 +40,7 @@ Tree_status BackEndX86(Language* language, const char* name_asm_file) {
     CreateAsmFileX86(language, language->tree.root, asm_file);
 
     PrintFuncMyPrintf(language, asm_file);
+    PrintFuncMyScanf(language, asm_file);
 
     fprintf(asm_file, "section .note.GNU-stack noalloc noexec nowrite progbits\n");
 
@@ -598,4 +598,23 @@ void PrintFuncMyPrintf(Language* language, FILE* asm_file) {
     LABEL_(print); LEA_R_M_(r10, hex_chars); MOV_R_M_(al, r10 + rax); CALL_("print_char");
     LABEL_(next_digit); DEC_(r9); JNZ_ TO_LABEL_(loop);
     POP_R_(rsi); POP_R_(r11); POP_R_(rdx); POP_R_(rcx); POP_R_(rbx); RET_;
+}
+
+void PrintFuncMyScanf(Language* language, FILE* asm_file) {
+    assert(language);
+    assert(asm_file);
+
+    FUNC_(my_scanf);
+
+    PUSH_R_(rbp); MOV_R1_R2_(rbp, rsp); PUSH_R_(rbx); PUSH_R_(r12); PUSH_R_(r13);
+    MOV_R1_R2_(rbx, rsi); XOR_R1_R2_(r13, r13);
+    MOV_R_NUM_(rax, 0); MOV_R_NUM_(rdi, 0); LEA_R_M_(rsi, buffer); MOV_R_NUM_(rdx, 32); SYSCALL_;
+    LEA_R_M_(rsi, buffer); XOR_R1_R2_(rax, rax);
+    LABEL_(check_sign); CMP_R_CHAR(cl, '-'); JNE_ TO_LABEL_(loop); MOV_R_NUM_(r13, 1); INC_(rsi);
+    LABEL_(loop); MOVZX_R_M_(rcx, rsi); CMP_R_CHAR(cl, '0'); JL_ TO_LABEL_(apply_sign); CMP_R_CHAR(cl, '9'); JG_ TO_LABEL_(apply_sign);
+    SUB_R_NUM_(rcx, '0'); IMUL_R_NUM_(rax, 10); ADD_R1_R2_(rax, rcx); INC_(rsi); JMP_ TO_LABEL_(loop);
+
+    LABEL_(apply_sign); TEST_R1_R2_(r13, r13); JZ_ TO_LABEL_(store); NEG_(rax);
+    LABEL_(store); MOV_M_R_(rbx, rax); 
+    POP_R_(r13); POP_R_(r12); POP_R_(rbx); POP_R_(rbp); RET_;
 }
