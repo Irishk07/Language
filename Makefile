@@ -11,6 +11,6 @@ run_my_proc:
 
 .PHONY: run_x86
 run_x86:
-	cd front-end && make && ./front_end_prog dump.html dump factorial.txt ../tree.txt
+	cd front-end && make && ./front_end_prog dump.html dump sq_solver.txt ../tree.txt
 	cd middle-end && make && ./middle_end_prog dump.html dump ../tree.txt
-	cd back-end && make && make run_x86
+	cd back-end && make clean && make run_x86

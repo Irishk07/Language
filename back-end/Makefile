@@ -59,6 +59,12 @@ run_x86: x86
 run_my_proc: my_proc
 	@./back_end_prog ../tree.txt ../compilyator/asm/asm.txt dump.html dump
 
+.PHONY: run_asm
+run_asm:
+	nasm -f elf64 asm_x86.asm -o asm_x86.o
+	ld asm_x86.o -o asm_x86
+	./asm_x86
+
 clean:
 	rm -f build/*.o
 	rm -f build/*.d

@@ -28,6 +28,7 @@ Tree_status LanguageCtor(Language* language, const char* file_with_tree,
     language->cnt_labels.cnt_if    = 0;
     language->cnt_labels.cnt_while = 0;
     language->cnt_labels.cnt_else  = 0;
+    language->cnt_labels.cnt_pows  = 0;
 
     return SUCCESS;
 }

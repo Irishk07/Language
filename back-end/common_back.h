@@ -10,6 +10,7 @@ struct Cnt_labels {
     size_t cnt_if;
     size_t cnt_while;
     size_t cnt_else;
+    size_t cnt_pows;
 };
 
 struct Language {

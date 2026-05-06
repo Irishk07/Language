@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "back_end.h"
 #include "back_end_x86.h"
@@ -29,19 +30,24 @@ int main(int argc, char** argv) {
     #ifdef MY_PROC
     BackEnd(&language, name_asm_file);
     #else
-    is_second_pass = false;
-    current_ip = ADDR_ENTRY_POINT;
-    labels_count = 0;
-    language.cnt_labels = {0, 0, 0};
-    BackEndX86(&language, name_asm_file, name_bin_file);
+    One_label* labels_table = (One_label*)calloc(MAX_CNT_LABELS, sizeof(One_label));
+    if (labels_table == NULL) return 1;
 
-    is_second_pass = true;
-    current_ip = ADDR_ENTRY_POINT;
-    language.cnt_labels = {0, 0, 0};
-    BackEndX86(&language, name_asm_file, name_bin_file);
+    Labels labels = {.labels_table = labels_table, .labels_count = 0, .is_second_pass = false, .current_ip = ADDR_ENTRY_POINT};
+    language.cnt_labels = {0, 0, 0, 0};
+    BackEndX86(&language, &labels, name_asm_file, name_bin_file);
+
+    labels.is_second_pass = true;
+    labels.current_ip = ADDR_ENTRY_POINT;
+    language.cnt_labels = {0, 0, 0, 0};
+    BackEndX86(&language, &labels, name_asm_file, name_bin_file);
+    free(labels_table);
     #endif  
 
     LanguageDtor(&language);
 }
 
 /*objdump -D -b binary -m i386:x86-64 --start-address=0x2000 -M intel prog_x86.bin > dump.txt*/
+
+/*nasm -f elf64 asm_x86.asm -o asm_x86.o*/
+/*ld asm_x86.o -o asm_x86*/
