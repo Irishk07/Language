@@ -16,8 +16,6 @@ Tree_status BackEnd(Language* language, const char* name_asm_file) {
     assert(language);
     assert(name_asm_file);
 
-    ReadPreOrderTreeFile(language);
-
     FILE* asm_file = fopen(name_asm_file, "w");
     if (asm_file == NULL)
         TREE_CHECK_AND_RETURN_ERRORS(OPEN_ERROR);
@@ -104,6 +102,8 @@ void CreateAsmFile(Language* language, Tree_node* tree_node, FILE* asm_file) {
             case OPERATOR_CALL_FUNCTION: PrintCallFunction(language, tree_node, asm_file);    break;
             case OPERATOR_RETURN:        PrintReturnFunction(language, tree_node, asm_file);  break;
 
+            case OPERATOR_C_ASSIGNMENT:
+            case OPERATOR_C_CHANGE:
             case OPERATOR_ABOVE:
             case OPERATOR_BEFORE:
             case OPERATOR_EQUAL: 
